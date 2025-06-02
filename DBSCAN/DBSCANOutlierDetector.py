@@ -63,9 +63,6 @@ class DBSCANOutlierDetector:
         or if you want to ensure fair distance calculation for DBSCAN.
         Must be called before `fit()`. If called, you may want to reduce `eps`.
 
-        Examples
-        --------
-        >>> detector.scale_features()
         """
         scaler = StandardScaler()
         self.df[self.features] = scaler.fit_transform(self.df[self.features])
