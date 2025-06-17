@@ -187,46 +187,64 @@ if __name__ == "__main__":
     df_snr_all = spark.read.parquet(snr_data_path).select(columns)
     df_snr = df_snr_all.toPandas()
 
-    def detect_anomalies_for_all_sn(df, feature_col="avg_5gsnr", time_col="hour"):
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    import pandas as pd
+
+    def detect_anomaly_group(args):
+        sn_val, group, feature_col, time_col = args
+        group_sorted = group.sort_values(by=time_col).reset_index(drop=True)
+        detector = FeaturewiseKDENoveltyDetector(
+            df=group_sorted,
+            feature_col=feature_col,
+            time_col=time_col,
+            train_idx=slice(0, 1068),
+            new_idx=slice(-26, None),
+            train_percentile=99
+        )
+        output = detector.fit()
+        return {
+            "sn": sn_val,
+            "outlier_count": output["outlier_count"],
+            "total_new_points": output["total_new_points"]
+        }
+
+    def detect_anomalies_parallel(df, feature_col="avg_5gsnr", time_col="hour", n_workers=200):
+        args = [(sn_val, group, feature_col, time_col) for sn_val, group in df.groupby("sn")]
         results = []
-        for sn_val, group in df.groupby("sn"):
-            group_sorted = group.sort_values(by=time_col).reset_index(drop=True)
-            detector = FeaturewiseKDENoveltyDetector(
-                df=group_sorted,
-                feature_col=feature_col,
-                time_col=time_col,
-                train_idx=slice(0, 1068),
-                new_idx=slice(-26, None),
-                train_percentile=99  # or 100 if you don't want to filter
-            )
-            output = detector.fit()
-            results.append({
-                "sn": sn_val,
-                "outlier_count": output["outlier_count"],
-                "total_new_points": output["total_new_points"]
-            })
+        with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            futures = [executor.submit(detect_anomaly_group, arg) for arg in args]
+            for future in as_completed(futures):
+                results.append(future.result())
         return results
-    result = detect_anomalies_for_all_sn(df_snr)
 
-    df_result = spark.createDataFrame(pd.DataFrame(result))
+    # Main experiment loop
+    worker_list = [200, 150, 100, 64, 32, 16, 8, 4, 1]
+    timing_results = []
 
-    df_result.write.mode("overwrite")\
-           .parquet( hdfs_pd + "/user/ZheS//owl_anomally//anomally_result/kde_parallel") 
-                    
-    #
+    for workers in worker_list:
+        print(f"\nRunning with {workers} workers...")
+        start = time.time()
+        result = detect_anomalies_parallel(df_snr, n_workers=workers)
+        duration = time.time() - start
+        df_result = pd.DataFrame(result)
 
-    end_time = time.time()
-    print(f"Execution time: {end_time - start_time:.2f} seconds for {df_result.count()} customer")
+        # Print the DataFrame for this worker setting (optional)
+        print(df_result)
 
+        # Save to HDFS using Spark
+        df_result_spark = spark.createDataFrame(df_result)
+        output_path = f"/user/ZheS//owl_anomally//anomally_result/kde_{workers}"
+        df_result_spark.write.mode("overwrite").parquet(output_path)
 
+        timing_results.append({
+            "workers": workers,
+            "duration_sec": duration,
+            "num_serial_numbers": len(result)
+        })
+        print(f"Completed in {duration:.2f} seconds with {len(result)} serial numbers.")
 
+    # Print timing summary table
+    print("\n=== Summary of All Runs ===")
+    timing_df = pd.DataFrame(timing_results)
+    print(timing_df)
 
-    """
-    
-    #unique_sns = df_snr_all.select("sn").distinct().rdd.map(lambda row: row.sn).collect()
-    #sampled_sns = random.sample(unique_sns, 100)
-    #df_snr_sampled = df_snr_all.filter(col("sn").isin(sampled_sns)).orderBy("sn", time_col)
-    #df_snr = df_snr_sampled.toPandas()
-    
-
-    """
