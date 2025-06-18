@@ -38,7 +38,7 @@ class ARIMAAnomalyDetector:
     >>> detector.plot_anomalies()
     """
 
-    def __init__(self, df, time_col, feature, season_length=1, confidence_level=99, freq='h'):
+    def __init__(self, df, time_col, feature, season_length=24, confidence_level=99, freq='h'):
         """
         Initialize the ARIMAAnomalyDetector.
         """
@@ -120,8 +120,6 @@ class ARIMAAnomalyDetector:
             DataFrame to plot (default: uses self.insample_forecast)
         date_filter : tuple or None
             (start_date, end_date) to filter plotted data (default: None, plot all)
-            detector.plot_anomalies(date_filter=("2025-04-06", "2025-04-09"))
-
         confidence_level : int or None
             Confidence level for prediction interval (default: uses self.confidence_level)
         """
@@ -153,6 +151,37 @@ class ARIMAAnomalyDetector:
         plt.xlabel("Time")
         plt.ylabel(self.feature)
         plt.show()
+    
+    def get_recent_anomaly_stats(self, num_recent_points=24):
+        """
+        Return a dictionary summarizing anomaly stats from the last n points.
+    
+        Parameters
+        ----------
+        num_recent_points : int
+            Number of most recent points to analyze.
+    
+        Returns
+        -------
+        dict
+            {
+                "outlier_count": int,
+                "total_new_points": int,
+                "outlier_indices": list
+            }
+        """
+        if self.insample_forecast is None or 'anomaly' not in self.insample_forecast.columns:
+            raise ValueError("Anomaly detection has not been run yet. Please call run() first.")
+    
+        recent_data = self.insample_forecast[-num_recent_points:].copy()
+        outliers = recent_data[recent_data['anomaly']]
+        
+        return {
+            "outlier_count": outliers.shape[0],
+            "total_new_points": num_recent_points,
+            "outlier_indices": outliers.index.tolist()
+        }
+
 
     def run(self):
         """
@@ -161,5 +190,3 @@ class ARIMAAnomalyDetector:
         self.prepare_data()
         self.fit_forecast()
         self.detect_anomalies()
-
-
