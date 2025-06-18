@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
 
 
-
+    N_LAGS = 144
     hdfs_pd = "hdfs://njbbvmaspd11.nss.vzwnet.com:9000/"
     hdfs_pa =  'hdfs://njbbepapa1.nss.vzwnet.com:9000'
     import random
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
         detector = AutoencoderAnomalyDetector(df=group_sorted, time_col=time_col, feature=feature_col)
         detector.fit()
-        output = detector.get_anomaly_stats(num_recent_points = 26)
+        output = detector.get_anomaly_stats(num_recent_points = N_LAGS)
         return {
             "sn": sn_val,
             "outlier_count": output["outlier_count"],
