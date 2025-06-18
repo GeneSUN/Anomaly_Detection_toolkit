@@ -327,7 +327,7 @@ if __name__ == "__main__":
     def detect_anomaly_group(args):
         sn_val, group, feature_col, time_col = args
         group_sorted = group.sort_values(by=time_col).reset_index(drop=True)
-        """"""
+        """
         detector = FeaturewiseKDENoveltyDetector(
             df=group_sorted,
             feature_col=feature_col,
@@ -337,6 +337,11 @@ if __name__ == "__main__":
             train_percentile=99
         )
         output = detector.fit()
+        """
+
+        detector = ARIMAAnomalyDetector(df=group_sorted, time_col='hour', feature='avg_5gsnr', season_length=1)
+        detector.run()
+        output = detector.get_recent_anomaly_stats(num_recent_points = 26)
         return {
             "sn": sn_val,
             "outlier_count": output["outlier_count"],
@@ -382,4 +387,3 @@ if __name__ == "__main__":
     print("\n=== Summary of All Runs ===")
     timing_df = pd.DataFrame(timing_results)
     print(timing_df)
-
