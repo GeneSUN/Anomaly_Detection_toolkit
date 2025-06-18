@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 
 class DBSCANOutlierDetector:
     """
-    DBSCAN-based outlier (anomaly) detection for tabular data with optional feature scaling.
+    DBSCAN-based outlier detection that uses all data for training
+    but only tests whether the most recent `n` points are outliers.
 
-    This class applies DBSCAN clustering to identify outliers in a pandas DataFrame. 
     Features can be optionally standardized (zero mean, unit variance) before fitting,
     which is important because DBSCAN is sensitive to feature scales.
 
@@ -29,11 +29,15 @@ class DBSCANOutlierDetector:
         Note: If using standardized features, adjust `eps` accordingly (typical values are 0.3 to 1.0).
     min_samples : int, default=2
         Minimum number of points to form a core point in DBSCAN.
-
+    recent_window_size : int
+        Number of most recent points to evaluate for outliers.
+    scale : bool, default=True
+        Whether to scale features before clustering.
     Usage
     -----
     >>> detector = DBSCANOutlierDetector(df, features=["x1", "x2"], eps=3, min_samples=2)
-
+    >>> df_with_label = detector.fit()
+    >>> detector.plot()
     Attributes
     ----------
     df : pandas.DataFrame
@@ -44,85 +48,83 @@ class DBSCANOutlierDetector:
         Whether features have been standardized.
     """
 
-    def __init__(self, df, features, eps=3, min_samples=2):
-        """
-        Initialize the outlier detector with data and parameters.
-        """
+    def __init__(self, df, features, eps=0.5, min_samples=5, recent_window_size=24, scale=True):
         self.df = df.copy()
         self.features = features
         self.eps = eps
         self.min_samples = min_samples
-        self.outlier_label = None  # to be set after fit
-        self.scaled = False        # Track if scaling was applied
+        self.recent_window_size = recent_window_size
+        self.scale = scale
+        self.scaler = None
+        self.full_X = None
+        self.labels_ = None
+        self.outlier_mask = None
 
-    def scale_features(self):
-        """
-        Standardize the selected features using sklearn's StandardScaler (mean=0, std=1).
-
-        This is optional, but strongly recommended if your features are on different scales,
-        or if you want to ensure fair distance calculation for DBSCAN.
-        Must be called before `fit()`. If called, you may want to reduce `eps`.
-
-        """
-        scaler = StandardScaler()
-        self.df[self.features] = scaler.fit_transform(self.df[self.features])
-        self.scaled = True
+    def _prepare_features(self):
+        X = self.df[self.features].values
+        if self.scale:
+            self.scaler = StandardScaler()
+            X = self.scaler.fit_transform(X)
+        self.full_X = X
 
     def fit(self):
         """
-        Fit DBSCAN to the (optionally scaled) features and assign outlier labels.
+        Fit DBSCAN on all data, and check outliers only in the recent window.
 
         Returns
         -------
-        pandas.DataFrame
-            The dataframe with an added 'outlier_label' column (0 = inlier, 1 = outlier).
+        dict
+            {
+                "new_labels": list,
+                "outlier_count": int,
+                "total_new_points": int,
+                "outlier_indices": list
+            }
         """
-        X = self.df[self.features].values
-        clustering = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(X)
-        self.df['outlier_label'] = (clustering.labels_ == -1).astype(int)
-        self.outlier_label = self.df['outlier_label']
-        return self.df
+        self._prepare_features()
+        dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples)
+        self.labels_ = dbscan.fit_predict(self.full_X)
+
+        # define new data segment (last n rows)
+        new_idx = np.arange(len(self.full_X) - self.recent_window_size, len(self.full_X))
+        new_labels = self.labels_[new_idx]
+        outlier_mask = new_labels == -1
+
+        self.outlier_mask = outlier_mask
+
+        return {
+            "new_labels": new_labels.tolist(),
+            "outlier_count": int(np.sum(outlier_mask)),
+            "total_new_points": len(new_labels),
+            "outlier_indices": new_idx[outlier_mask].tolist(),
+        }
 
     def plot(self):
         """
-        Plot the selected features with inliers and outliers highlighted.
-
-        Raises
-        ------
-        ValueError
-            If called before `fit()`.
-        Notes
-        -----
-        - Works best if exactly 2 features are used for visualization.
-        - The plot title indicates whether standardization was applied.
+        Plot all points with last-N outliers highlighted (works best for 2D features).
         """
-        if self.outlier_label is None:
+        if self.labels_ is None:
             raise ValueError("Call .fit() before plotting.")
-        X = self.df[self.features].values
-        outlier_label = self.outlier_label.values
 
-        inliers = X[outlier_label == 0]
-        outliers = X[outlier_label == 1]
+        X = self.full_X
+        all_labels = self.labels_
+        new_start = len(X) - self.recent_window_size
 
         plt.figure(figsize=(8, 6))
-        plt.scatter(inliers[:, 0], inliers[:, 1], c='blue', marker='o', label='Inlier')
-        plt.scatter(outliers[:, 0], outliers[:, 1], c='red', marker='x', s=100, label='Outlier')
+        # plot all inliers
+        plt.scatter(X[all_labels != -1, 0], X[all_labels != -1, 1], c='blue', label='Inliers')
+        # plot all outliers
+        plt.scatter(X[all_labels == -1, 0], X[all_labels == -1, 1], c='gray', alpha=0.3, label='Outliers (overall)')
+        # highlight recent window outliers
+        recent_outlier_idx = np.where(self.outlier_mask)[0] + new_start
+        plt.scatter(X[recent_outlier_idx, 0], X[recent_outlier_idx, 1], c='red', label='Recent Outliers')
+
         plt.xlabel(self.features[0])
-        plt.ylabel(self.features[1] if len(self.features) > 1 else '')
-        title_suffix = " (Standardized)" if self.scaled else ""
-        plt.title(f"DBSCAN Outlier Detection{title_suffix} (eps={self.eps}, min_samples={self.min_samples})")
+        if len(self.features) > 1:
+            plt.ylabel(self.features[1])
+        plt.title(f"DBSCAN Outlier Detection (Last {self.recent_window_size} Points)")
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
         plt.show()
 
-if __name__ == "__main__":
-    detector = DBSCANOutlierDetector(df, features=["avg_4gsnr", "avg_5gsnr"], eps=3, min_samples=2)
-    df_with_label = detector.fit()
-    detector.plot()
-
-
-    detector = DBSCANOutlierDetector(df, features=["avg_4gsnr", "avg_5gsnr"], eps=0.5, min_samples=2)
-    detector.scale_features()   # <- Call before fit()
-    df_with_label = detector.fit()
-    detector.plot()
