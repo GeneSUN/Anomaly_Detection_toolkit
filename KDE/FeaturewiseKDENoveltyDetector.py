@@ -3,9 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KernelDensity
 
+
 class FeaturewiseKDENoveltyDetector:
     def __init__(self, df, feature_col="avg_4gsnr", time_col="hour", bandwidth=0.5,
-                 train_idx=None, new_idx=None, train_percentile=100,
+                 train_idx=None, new_idx=None, filter_percentile = 99, train_percentile=100,
                  anomaly_direction="low"):
         """
         Parameters:
@@ -15,7 +16,8 @@ class FeaturewiseKDENoveltyDetector:
             bandwidth (float): Bandwidth for KDE.
             train_idx (slice): Slice for training data.
             new_idx (slice): Slice for new (test) data.
-            train_percentile (float): Percentile for filtering out high-end outliers in training set.
+            filter_percentile (float): Percentile for filtering out high-end outliers in training set.
+            train_percentile (float): Percentile for detect outlier in testing set.
             anomaly_direction (str): One of {"both", "high", "low"} to detect direction of anomaly.
         """
         self.df = df
@@ -24,14 +26,15 @@ class FeaturewiseKDENoveltyDetector:
         self.bandwidth = bandwidth
         self.train_idx = train_idx
         self.new_idx = new_idx
+        self.filter_percentile = filter_percentile
         self.train_percentile = train_percentile
         self.anomaly_direction = anomaly_direction
         self.kde = None
         self.threshold = None
 
     def _filter_train_df(self, train_df):
-        if self.train_percentile < 100:
-            upper = np.percentile(train_df[self.feature_col], self.train_percentile)
+        if self.filter_percentile < 100:
+            upper = np.percentile(train_df[self.feature_col], self.filter_percentile)
             train_df = train_df[train_df[self.feature_col] <= upper]
         return train_df
 
