@@ -32,6 +32,7 @@ class EWMAAnomalyDetector:
     detector = EWMAAnomalyDetector(df_example,"Close" ,window=48, no_of_stds=2.0)
     detector.run()
     detector.plot()
+    res = detector.score_recent()
     """
 
     def __init__(self, df, column, n_recent = 24 ,window: int = 10, no_of_stds: float = 2.0, n_shift: int = 1):
