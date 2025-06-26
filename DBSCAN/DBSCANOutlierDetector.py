@@ -25,7 +25,7 @@ class DBSCANOutlierDetector:
         Number of most recent points to evaluate for outliers.
     scale : bool
         Whether to standardize features.
-    x_percentile : float
+    filter_percentile : float
         Percentile filter for training set. 100 means no filtering.
     """
 
@@ -37,7 +37,7 @@ class DBSCANOutlierDetector:
         min_samples: int = 5,
         recent_window_size: int = 24,
         scale: bool = True,
-        x_percentile: float = 100,
+        filter_percentile: float = 100,
     ):
         self.df = df.copy()
         self.features = features
@@ -45,7 +45,7 @@ class DBSCANOutlierDetector:
         self.min_samples = min_samples
         self.recent_window_size = recent_window_size
         self.scale = scale
-        self.x_percentile = x_percentile
+        self.filter_percentile = filter_percentile
 
         self.train_X = None
         self.test_X = None
@@ -56,11 +56,11 @@ class DBSCANOutlierDetector:
         self.dbscan_model = None
 
     def _apply_percentile_filter(self, df: pd.DataFrame) -> pd.DataFrame:
-        if self.x_percentile >= 100:
+        if self.filter_percentile >= 100:
             return df
         for col in self.features:
-            lower = np.percentile(df[col], (100 - self.x_percentile) / 2)
-            upper = np.percentile(df[col], 100 - (100 - self.x_percentile) / 2)
+            lower = np.percentile(df[col], (100 - self.filter_percentile) / 2)
+            upper = np.percentile(df[col], 100 - (100 - self.filter_percentile) / 2)
             df = df[(df[col] >= lower) & (df[col] <= upper)]
         return df
 
@@ -178,6 +178,5 @@ class DBSCANOutlierDetector:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
-
 
 
