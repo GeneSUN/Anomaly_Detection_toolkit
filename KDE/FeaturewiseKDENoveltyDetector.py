@@ -6,7 +6,7 @@ from sklearn.neighbors import KernelDensity
 
 class FeaturewiseKDENoveltyDetector:
     def __init__(self, df, feature_col="avg_4gsnr", time_col="hour", bandwidth=0.5,
-                 train_idx=None, new_idx=None, filter_percentile = 99, train_percentile=100,
+                 train_idx=None, new_idx=None, filter_percentile = 99, threshold_percentile=100,
                  anomaly_direction="low"):
         """
         Parameters:
@@ -17,7 +17,7 @@ class FeaturewiseKDENoveltyDetector:
             train_idx (slice): Slice for training data.
             new_idx (slice): Slice for new (test) data.
             filter_percentile (float): Percentile for filtering out high-end outliers in training set.
-            train_percentile (float): Percentile for detect outlier in testing set.
+            threshold_percentile (float): Percentile for detect outlier in testing set.
             anomaly_direction (str): One of {"both", "high", "low"} to detect direction of anomaly.
         """
         self.df = df
@@ -27,7 +27,7 @@ class FeaturewiseKDENoveltyDetector:
         self.train_idx = train_idx
         self.new_idx = new_idx
         self.filter_percentile = filter_percentile
-        self.train_percentile = train_percentile
+        self.threshold_percentile = threshold_percentile
         self.anomaly_direction = anomaly_direction
         self.kde = None
         self.threshold = None
@@ -60,8 +60,8 @@ class FeaturewiseKDENoveltyDetector:
 
         # Directional anomaly logic based on percentiles
         new_values = new_df[self.feature_col].values
-        lower_threshold = np.percentile(train_df[self.feature_col], 100 - self.train_percentile)
-        upper_threshold = np.percentile(train_df[self.feature_col], self.train_percentile)
+        lower_threshold = np.percentile(train_df[self.feature_col], 100 - self.threshold_percentile)
+        upper_threshold = np.percentile(train_df[self.feature_col], self.threshold_percentile)
 
         if self.anomaly_direction == "low":
             direction_mask = new_values < lower_threshold
@@ -150,7 +150,7 @@ detector = FeaturewiseKDENoveltyDetector(
     time_col="hour",
     train_idx=slice(0, 1068),
     new_idx=slice(-26, None),
-    train_percentile=95,
+    threshold_percentile=95,
     anomaly_direction="both"  # can be "low", "high", or "both"
 )
 result = detector.fit()
