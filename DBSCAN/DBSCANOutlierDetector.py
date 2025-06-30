@@ -99,7 +99,7 @@ class DBSCANOutlierDetector:
             "outlier_indices": self.test_indices[self.outlier_mask].tolist(),
         }
     
-    def plot_scatter(self, use_scaled: bool = True):
+    def plot_scatter(self, use_scaled: bool = False):
         """
         Scatter plot of DBSCAN clustering, differentiating train/test outliers.
     
