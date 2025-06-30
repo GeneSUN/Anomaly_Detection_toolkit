@@ -6,7 +6,7 @@ from sklearn.neighbors import KernelDensity
 
 class FeaturewiseKDENoveltyDetector:
     def __init__(self, df, feature_col="avg_4gsnr", time_col="hour", bandwidth=0.5,
-                 train_idx=None, new_idx=None, filter_percentile = 99, threshold_percentile=100,
+                 train_idx=None, new_idx=None, filter_percentile = 100100, threshold_percentile=100,
                  anomaly_direction="low"):
         """
         Parameters:
@@ -150,6 +150,7 @@ detector = FeaturewiseKDENoveltyDetector(
     time_col="hour",
     train_idx=slice(0, 1068),
     new_idx=slice(-26, None),
+    filter_percentile = 100,
     threshold_percentile=95,
     anomaly_direction="both"  # can be "low", "high", or "both"
 )
