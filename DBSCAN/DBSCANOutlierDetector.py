@@ -36,7 +36,7 @@ class DBSCANOutlierDetector:
         eps: float = 0.5,
         min_samples: int = 5,
         recent_window_size: int = 24,
-        scale: bool = True,
+        scale: bool = False,
         filter_percentile: float = 100,
     ):
         self.df = df.copy()
