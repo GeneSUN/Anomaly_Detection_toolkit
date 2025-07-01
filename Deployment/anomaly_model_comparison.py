@@ -1,26 +1,19 @@
-import numpy as np
+# Anomaly_Display http://njbbvmaspd13:18080/#/notebook/2M1FCBHCY
+# anomaly_model_comparison http://njbbvmaspd13:18080/#/notebook/2KZ8H5GJA
+
 import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.neighbors import KernelDensity
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timedelta, date
-from pyspark.sql.window import Window
-from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode
-from pyspark.sql.types import *
-from pyspark.sql.types import FloatType
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 import sys 
-
-sys.path.append('/usr/apps/vmas/scripts/ZS') 
-
-from MailSender import MailSender
-# http://njbbvmaspd13:18080/next/#/notebook/2KW1NYKEF
-sys.path.append('/usr/apps/vmas/scripts/ZS/owl_anomaly') 
-
 import time
 
+sys.path.append('/usr/apps/vmas/scripts/ZS') 
+from MailSender import MailSender
 
+sys.path.append('/usr/apps/vmas/scripts/ZS/owl_anomaly') 
 from OutlierDetector import (
     FeaturewiseKDENoveltyDetector,
     DBSCANOutlierDetector,
@@ -131,7 +124,8 @@ if __name__ == "__main__":
     FEATURE_COLS = ["avg_4gsnr", "avg_5gsnr"]
     FEATURE_COL = "avg_4gsnr"
     NUM_RECENT_POINTS = 1
-    METHODS = ["KDE", "EWMA","DBSCAN"]
+    METHODS = ["KDE", "EWMA","DBSCAN","ARIMA"]
+    METHODS = ["ARIMA"]
     WORKER_LIST = [50]
 
     input_path = "/user/ZheS//owl_anomally/capacity_pplan50127_sliced/"
