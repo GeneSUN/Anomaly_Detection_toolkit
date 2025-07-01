@@ -11,23 +11,22 @@ from pyspark.sql.types import FloatType
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 import sys 
-import traceback
-from pyspark.sql.functions import from_unixtime 
-import argparse 
-
-from functools import reduce
-from pyspark.sql import DataFrame
 
 sys.path.append('/usr/apps/vmas/scripts/ZS') 
 
 from MailSender import MailSender
-from statsforecast import StatsForecast
-from statsforecast.models import AutoARIMA
-import pandas as pd
-import matplotlib.pyplot as plt
 # http://njbbvmaspd13:18080/next/#/notebook/2KW1NYKEF
 sys.path.append('/usr/apps/vmas/scripts/ZS/owl_anomaly') 
-from OutlierDetector import FeaturewiseKDENoveltyDetector, DBSCANOutlierDetector, ARIMAAnomalyDetector,EWMAAnomalyDetector
+
+import time
+
+
+from OutlierDetector import (
+    FeaturewiseKDENoveltyDetector,
+    DBSCANOutlierDetector,
+    ARIMAAnomalyDetector,
+    EWMAAnomalyDetector
+)
 
 def prepare_data(df, min_rows=100):
 
@@ -37,10 +36,9 @@ def prepare_data(df, min_rows=100):
     df_filtered = df.join(sn_valid, on="sn", how="inner").toPandas()
     return df_filtered
 
-def detect_anomaly_group(args, method, feature_col = None, feature_cols = None, num_recent_points= 1):
-    sn_val, group, time_col = args
+def detect_anomaly_group(sn_val, group, method, time_col, feature_col, feature_cols, num_recent_points):
     group_sorted = group.sort_values(by=time_col).reset_index(drop=True)
-
+    
     if method == "KDE":
         detector = FeaturewiseKDENoveltyDetector(
             df=group_sorted,
@@ -67,16 +65,13 @@ def detect_anomaly_group(args, method, feature_col = None, feature_cols = None, 
         output = detector.get_recent_anomaly_stats(num_recent_points=num_recent_points)
 
     elif method == "DBSCAN":
-        """            """
         detector = DBSCANOutlierDetector(group_sorted, 
-                                        features=FEATURE_COLS, 
-                                        eps=2, 
-                                        min_samples=2, 
-                                        recent_window_size=num_recent_points, 
-                                        scale=False, 
-                                        filter_percentile=98)
-
-
+                                features=feature_cols, 
+                                eps=2, 
+                                min_samples=2, 
+                                recent_window_size=num_recent_points, 
+                                scale=False, 
+                                filter_percentile=98)
         output = detector.fit()
 
     elif method == "EWMA":
@@ -98,83 +93,64 @@ def detect_anomaly_group(args, method, feature_col = None, feature_cols = None, 
         "total_new_points": output["total_new_points"]
     }
 
-def detect_anomalies_parallel(df, method, feature_col="avg_4gsnr", time_col=None, n_workers=None):
-    assert time_col is not None, "time_col must be provided"
-    args = [(sn_val, group, time_col) for sn_val, group in df.groupby("sn")]
+def detect_anomalies_parallel(df, method, feature_col, time_col, feature_cols, n_workers, num_recent_points):
+    args = [(sn, group, method, time_col, feature_col, feature_cols, num_recent_points) for sn, group in df.groupby("sn")]
     results = []
     with ProcessPoolExecutor(max_workers=n_workers) as executor:
-        futures = [executor.submit(detect_anomaly_group, arg, method, feature_col) for arg in args]
+        futures = [executor.submit(detect_anomaly_group, *arg) for arg in args]
         for future in as_completed(futures):
             results.append(future.result())
     return results
 
-def run_experiments(method, df, worker_list, feature_col, time_col):
-    timing_results = []
 
-    for workers in worker_list:
-        print(f"\nRunning {method} with {workers} workers...")
-        start = time.time()
-        result = detect_anomalies_parallel(df, method=method, feature_col=feature_col, time_col=time_col, n_workers=workers)        
-        duration = time.time() - start
+def run_detection_experiment(df, methods, feature_col, feature_cols, time_col, worker_list, result_base_path, num_recent_points):
+    summary = []
+    for method in methods:
+        for workers in worker_list:
+            print(f"\nRunning {method} with {workers} workers...")
+            start = time.time()
 
-        df_result = pd.DataFrame(result)
-        df_result_spark = spark.createDataFrame(df_result)
-        output_path = f"{result_base_path}/{feature_col}/{method}/{method}_{workers}"
-        df_result_spark.write.mode("overwrite").parquet(output_path)
+            results = detect_anomalies_parallel(df, method, feature_col, time_col, feature_cols, workers, num_recent_points)
+            duration = time.time() - start
 
-        timing_results.append({
-            "method": method,
-            "workers": workers,
-            "duration_sec": duration,
-            "num_serial_numbers": len(result)
-        })
-        print(f"Completed in {duration:.2f} seconds with {len(result)} serial numbers.")
-    
-    return timing_results
+            df_result = pd.DataFrame(results)
+            spark_df = spark.createDataFrame(df_result)
+            output_path = f"{result_base_path}/{feature_col}/{method}/{method}_{workers}"
+            spark_df.write.mode("overwrite").parquet(output_path)
 
+            summary.append({"method": method, "workers": workers, "duration_sec": duration, "num_serial_numbers": len(results)})
+            print(f"Completed in {duration:.2f}s, SNs: {len(results)}")
 
+    return pd.DataFrame(summary)
 
 if __name__ == "__main__":
-    email_sender = MailSender()
-    spark = SparkSession.builder\
-            .appName('KDENoveltyDetector')\
-            .config("spark.ui.port","24041")\
-            .getOrCreate()
+    spark = SparkSession.builder.appName('AnomalyDetection').config("spark.ui.port", "24041").getOrCreate()
     spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
-    import time
-    start_time = time.time()  # ⏱ Start timing
     TIME_COL = "hour"
-    # Constants
+    FEATURE_COLS = ["avg_4gsnr", "avg_5gsnr"]
+    FEATURE_COL = "avg_4gsnr"
+    NUM_RECENT_POINTS = 1
+    METHODS = ["KDE", "EWMA","DBSCAN"]
+    WORKER_LIST = [50]
+
     input_path = "/user/ZheS//owl_anomally/capacity_pplan50127_sliced/"
-    result_base_path = "/user/ZheS//owl_anomally//zanomally_result_sliced/"
-    FEATURE_COLS = ["avg_4gsnr","avg_5gsnr"]
-    num_recent_points = 1
+    result_path = "/user/ZheS//owl_anomally//zanomally_result_sliced/"
 
-    columns = ["sn", TIME_COL] + FEATURE_COLS
-    df = spark.read.parquet(input_path)\
-                .drop("sn")\
-                .withColumnRenamed("slice_id", "sn")\
-                .select(columns)
+    df_spark = spark.read.parquet(input_path).drop("sn").withColumnRenamed("slice_id", "sn")
+    df_spark = df_spark.select(["sn", TIME_COL] + FEATURE_COLS)
+    df_filtered = prepare_data(df_spark)
 
+    summary_df = run_detection_experiment(
+        df_filtered,
+        methods=METHODS,
+        feature_col=FEATURE_COL,
+        feature_cols=FEATURE_COLS,
+        time_col=TIME_COL,
+        worker_list=WORKER_LIST,
+        result_base_path=result_path,
+        num_recent_points=NUM_RECENT_POINTS
+    )
 
-    hdfs_pd = "hdfs://njbbvmaspd11.nss.vzwnet.com:9000/"
-    hdfs_pa =  'hdfs://njbbepapa1.nss.vzwnet.com:9000'
-
-    df = prepare_data(df)
-    worker_list = [50]
-    #worker_list = [100]
-    all_results = []
-
-    #for method in ["EWMA","ARIMA", "DBSCAN", "KDE"]:
-    for method in ["KDE","EWMA"]:
-        feature_col = "avg_4gsnr"  # you can switch this depending on the use case
-
-        results = run_experiments(method, df, worker_list, feature_col, time_col=TIME_COL)
-        all_results.extend(results)
-
-    # Final timing summary
-    summary_df = pd.DataFrame(all_results)
     print("\n=== Summary of All Runs ===")
     print(summary_df)
-
