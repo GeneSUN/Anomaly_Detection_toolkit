@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.datasets import make_blobs
 from sklearn.preprocessing import StandardScaler
-
 class PCAOutlierDetector:
-    def __init__(self, n_components=2, scale_data=True, outlier_percentile=98):
+    def __init__(self, X_raw, n_components=2, scale_data=True, outlier_percentile=99, score_method = "log_likelihood"):
+        self.X_raw = X_raw
         self.n_components = n_components
         self.scale_data = scale_data
         self.outlier_percentile = outlier_percentile
@@ -13,89 +13,102 @@ class PCAOutlierDetector:
         self.scaler = StandardScaler() if scale_data else None
         self.pca = PCA(n_components=self.n_components)
 
-        # Internal state
-        self.X_raw = None
         self.X_scaled = None
-        self.X_proj = None
-        self.X_pca = None
+        self.X_scaled = None
         self.residuals = None
         self.outlier_mask = None
 
-    def fit(self, X):
-        """
-        Fit PCA, compute projection, residuals, and identify outliers.
-        """
-        self.X_raw = X
+        self.score_method = score_method
+
+    def fit(self, X_raw = None, score_method = None):
+        if X_raw is None:
+            X_raw = self.X_raw
+        if score_method is None:
+            score_method = self.score_method
+            
         self.X_scaled = self.scaler.fit_transform(X) if self.scale_data else X.copy()
-
         self.X_pca = self.pca.fit_transform(self.X_scaled)
-        self.X_proj = self.pca.inverse_transform(self.X_pca)
+        
+        if score_method == "log_likelihood":
+            self.compute_outlier_score_by_log_likelihood()
+        elif score_method == "projection":
+            self.compute_outlier_score_by_minor_projection()    
+        
+        return self
 
-        # Compute residuals in scaled space
-        self.residuals = np.linalg.norm(self.X_scaled - self.X_proj, axis=1)
-
-        # Identify top outliers
+    def compute_outlier_score_by_log_likelihood(self):
+        """
+        Use PCA log-likelihood as an outlier score.
+        Lower log-likelihood = more anomalous.
+        """
+        X_scaled = self.X_scaled
+        log_likelihoods = self.pca.score_samples(X_scaled)  # shape: (n_samples,)
+        self.residuals = -log_likelihoods  # convert to "outlier score"
         threshold = np.percentile(self.residuals, self.outlier_percentile)
         self.outlier_mask = self.residuals > threshold
         return self
 
-
-    def visualize_original_space(self):
+    def compute_outlier_score_by_minor_projection(self):
         """
-        Visualize in original coordinate space (2D only).
+        Use projections onto discarded PCs (orthogonal to retained hyperplane).
         """
-        if self.X_raw.shape[1] != 2:
-            raise ValueError("This visualization requires 2D input data.")
+        full_pca = PCA(n_components=self.X_scaled.shape[1])
+        full_pca.fit(self.X_scaled)
+        X_centered = self.X_scaled - full_pca.mean_
 
-        # Arrow: principal direction in original space
-        mean_scaled = np.mean(self.X_scaled, axis=0)
-        vector_scaled = self.pca.components_[0] * 3
-        mean = self.scaler.inverse_transform([mean_scaled])[0] if self.scale_data else mean_scaled
-        vec_end = self.scaler.inverse_transform([mean_scaled + vector_scaled])[0] if self.scale_data else mean_scaled + vector_scaled
-        dx, dy = vec_end - mean
+        V_minor = full_pca.components_[self.n_components:]
+        λ_minor = full_pca.explained_variance_[self.n_components:]
 
-        # Projections in original scale
-        X_proj_orig = self.scaler.inverse_transform(self.X_proj) if self.scale_data else self.X_proj
+        projections = X_centered @ V_minor.T
+        squared_scores = (projections ** 2) / λ_minor
+        self.residuals = np.sum(squared_scores, axis=1)
+        threshold = np.percentile(self.residuals, self.outlier_percentile)
+        self.outlier_mask = self.residuals > threshold
+        return self
 
-        plt.figure(figsize=(10, 6))
-        plt.scatter(self.X_raw[:, 0], self.X_raw[:, 1], c=self.residuals, cmap='coolwarm', edgecolor='k', label='Data Points')
-
-        for i in range(len(self.X_raw)):
-            plt.plot([self.X_raw[i, 0], X_proj_orig[i, 0]], [self.X_raw[i, 1], X_proj_orig[i, 1]], 'gray', alpha=0.3)
-
-        plt.arrow(mean[0], mean[1], dx, dy, color='green', width=0.05, head_width=0.3, label='PC1 direction')
-        plt.plot(X_proj_orig[:, 0], X_proj_orig[:, 1], 'k.', alpha=0.5, label='Projection onto PC1')
-
-        plt.scatter(self.X_raw[self.outlier_mask, 0], self.X_raw[self.outlier_mask, 1],
-                    edgecolor='black', facecolor='none', s=120, linewidth=2, label='Outliers')
-
-        plt.colorbar(label='Residual Distance')
-        plt.title("Outlier Detection in Original Feature Space")
-        plt.xlabel("Feature 1")
-        plt.ylabel("Feature 2")
-        plt.legend()
-        plt.axis('equal')
-        plt.grid(True)
-        plt.show()
-
-    def visualize_pca_space(self):
+    def score_samples(self, X_new):
         """
-        Visualize data projected onto PC1 and PC2 axes.
+        Compute log-likelihood of new samples under the current PCA model.
         """
-        if self.n_components < 2:
-            raise ValueError("n_components must be at least 2 to visualize PCA space.")
+        if self.X_raw is None:
+            raise RuntimeError("Model must be fitted before scoring new data.")
+        X_new_scaled = self.scaler.transform(X_new) if self.scale_data else X_new
+        return self.pca.score_samples(X_new_scaled)
 
-        plt.figure(figsize=(10, 6))
-        plt.scatter(self.X_pca[:, 0], self.X_pca[:, 1], c=self.residuals, cmap='coolwarm', edgecolor='k', label='Projected Points')
 
-        plt.scatter(self.X_pca[self.outlier_mask, 0], self.X_pca[self.outlier_mask, 1],
-                    edgecolor='black', facecolor='none', s=120, linewidth=2, label='Outliers')
-
-        plt.colorbar(label='Residual Distance')
-        plt.xlabel("PC1")
-        plt.ylabel("PC2")
-        plt.title("Outlier Detection in PCA Space (PC1 vs PC2)")
-        plt.legend()
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
+    def plot_all_stages(self):
+        """
+        Plot 2x2 subplots: X_raw, X_scaled, X_pca, X_proj.
+        Outliers are marked with black-edged circles.
+        """
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    
+        # Plot 1: Raw
+        ax = axes[0]
+        ax.scatter(self.X_raw[:, 0], self.X_raw[:, 1], c='lightblue', edgecolor='k')
+        ax.scatter(self.X_raw[self.outlier_mask, 0], self.X_raw[self.outlier_mask, 1],
+                   facecolors='none', edgecolors='black', s=120, linewidth=2, label='Outlier')
+        ax.set_title("Original (X_raw)")
+        ax.set_xlabel("X-axis")
+        ax.set_ylabel("Y-axis")
+        ax.legend()
+    
+        # Plot 2: Scaled
+        ax = axes[1]
+        ax.scatter(self.X_scaled[:, 0], self.X_scaled[:, 1], c='lightgreen', edgecolor='k')
+        ax.scatter(self.X_scaled[self.outlier_mask, 0], self.X_scaled[self.outlier_mask, 1],
+                   facecolors='none', edgecolors='black', s=120, linewidth=2, label='Outlier')
+        ax.set_title("Standardized (X_scaled)")
+        ax.set_xlabel("X-axis")
+        ax.set_ylabel("Y-axis")
+        ax.legend()
+    
+        # Plot 3: PCA space
+        ax = axes[2]
+        ax.scatter(self.X_pca[:, 0], self.X_pca[:, 1], c='lightcoral', edgecolor='k')
+        ax.scatter(self.X_pca[self.outlier_mask, 0], self.X_pca[self.outlier_mask, 1],
+                   facecolors='none', edgecolors='black', s=120, linewidth=2, label='Outlier')
+        ax.set_title("PCA Space (X_pca)")
+        ax.set_xlabel("PC1")
+        ax.set_ylabel("PC2")
+        ax.legend()
