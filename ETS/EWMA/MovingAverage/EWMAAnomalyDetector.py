@@ -6,12 +6,12 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class EWMAAnomalyDetector:
     """
-    Applies EWMA smoothing, calculates control limits, detects anomalies, and summarizes recent results.
+    EWMA-based anomaly detector with optional scaling and flexible recent window evaluation.
 
     Parameters:
         df (pd.DataFrame): Input time series data.
         feature (str): Target feature to detect anomalies on.
-        recent_window_size (int): Number of recent points to evaluate in scoring.
+        recent_window_size (int or str): 'all' or integer; number of recent points to evaluate in scoring.
         window (int): Span for EWMA and rolling std.
         no_of_stds (float): Control limit multiplier.
         n_shift (int): Shift to prevent leakage.
@@ -23,7 +23,7 @@ class EWMAAnomalyDetector:
         self,
         df,
         feature,
-        recent_window_size=600,
+        recent_window_size=600,  # Can also be 'all' or None
         window=10,
         no_of_stds=2.0,
         n_shift=1,
@@ -34,6 +34,8 @@ class EWMAAnomalyDetector:
             "anomaly_direction must be one of {'both', 'high', 'low'}"
         assert scaler in {None, "standard", "minmax"} or hasattr(scaler, "fit_transform"), \
             "scaler must be 'standard', 'minmax', None, or a custom scaler with fit_transform"
+        assert isinstance(recent_window_size, (int, type(None), str)), \
+            "recent_window_size must be int, None, or 'all'"
 
         self.df_original = df.copy()
         self.feature = feature
@@ -89,9 +91,18 @@ class EWMAAnomalyDetector:
     def fit(self):
         df = self._add_ewma()
         df = self._detect_anomalies(df)
-        self.df_ = df
-        recent_df = df.tail(self.recent_window_size)
+
+        # Drop rows with NaNs due to shift and rolling
+        df_clean = df.dropna(subset=["EMA", "UCL", "LCL", "feature_scaled"])
+
+        if self.recent_window_size in [None, "all"]:
+            recent_df = df_clean
+        else:
+            recent_df = df_clean.tail(self.recent_window_size)
+
         outliers = recent_df[recent_df['anomaly']]
+        self.df_ = df  # Keep full version with possible NaNs for plotting
+
         return {
             "outlier_count": len(outliers),
             "total_new_points": len(recent_df),
@@ -107,9 +118,9 @@ class EWMAAnomalyDetector:
         plt.plot(df[timestamp_col], df[self.feature], label='Original', color='blue', alpha=0.6)
 
         # Inverse-transform if scaled
-        ema = self._inverse_scaler(df['EMA'])
-        ucl = self._inverse_scaler(df['UCL'])
-        lcl = self._inverse_scaler(df['LCL'])
+        ema = self._inverse_scaler(df['EMA'].fillna(0))
+        ucl = self._inverse_scaler(df['UCL'].fillna(0))
+        lcl = self._inverse_scaler(df['LCL'].fillna(0))
 
         plt.plot(df[timestamp_col], ema, label='EWMA', color='orange')
         plt.plot(df[timestamp_col], ucl, label='UCL', color='green', linestyle='--')
