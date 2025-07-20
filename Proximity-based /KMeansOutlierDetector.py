@@ -1,4 +1,3 @@
-# Re-import necessary packages after kernel reset
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,30 +5,61 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_blobs
 
-# Re-define the updated class with both filtering and thresholding
 class KMeansOutlierDetector:
+    """
+    KMeans-Based Outlier Detector using Distance to Cluster Centroids.
+
+    This class detects outliers by clustering the data using KMeans and computing the Euclidean
+    distance from each point to its assigned cluster center. Points that are farthest from their
+    cluster centroids are considered potential outliers.
+
+    Parameters
+    ----------
+    X : np.ndarray or pd.DataFrame
+        Input data to detect outliers from. Should be 2D or higher-dimensional.
+    n_clusters : int, default=2
+        Number of clusters to form using KMeans.
+    scale : bool, default=True
+        Whether to standardize features before clustering.
+    filter_percentile : float or None, default=None
+        Optional. If set, removes both tails of extreme values based on distance from the data center
+        before clustering. Helps prevent extreme outliers from distorting cluster centers.
+    threshold_percentile : float, default=95
+        Percentile of the distance distribution to use as a cutoff for classifying outliers.
+        Points with distances >= this threshold are labeled as outliers.
+
+    Attributes
+    ----------
+    labels : np.ndarray
+        Cluster labels assigned to each point.
+    centers : np.ndarray
+        Coordinates of cluster centroids.
+    distances : np.ndarray
+        Euclidean distances from each point to its assigned cluster centroid. This is also the Anomalous Score
+    is_outlier : np.ndarray of bool
+        Boolean array indicating which points are classified as outliers.
+    X : np.ndarray
+        The preprocessed input data used for clustering.
+
+    Methods
+    -------
+    fit()
+        Fit the KMeans model to the data, assign cluster labels, compute distances, and identify outliers.
+    plot()
+        Visualize outlier scores (distance to cluster center) and highlight detected outliers.
+        If input data has more than 2 dimensions, PCA is used for 2D visualization.
+
+    Example
+    -------
+    >>> detector = KMeansOutlierDetector(X, n_clusters=2, threshold_percentile=97)
+    >>> detector.fit()
+    >>> detector.plot()
+    """
+
     def __init__(self, X, n_clusters=2, scale=True,
                  filter_percentile=None, threshold_percentile=95,
                  random_state=42):
-        """
-        Parameters:
-            X : array-like, dataset
-            n_clusters : int, number of clusters for KMeans
-            scale : bool, whether to standard scale the data
-            filter_percentile : float in (0,100), optional, remove top/bottom percentile during preprocessing
-            threshold_percentile : float in (0,100), percentile for defining outliers based on distance
 
-        # Example usage
-        np.random.seed(42)
-        X_clusters, _ = make_blobs(n_samples=300, centers=[[0, 0], [6, 6]], cluster_std=1.0)
-        outliers = np.array([[20, 20], [-10, -10], [8, 0], [10, 10]])
-        X_all = np.vstack([X_clusters, outliers])
-
-        detector = KMeansOutlierDetector(X_all, n_clusters=2, filter_percentile=1, threshold_percentile=95)
-        detector.fit()
-        detector.plot()
-
-        """
         self.X_raw = X.copy()
         self.n_clusters = n_clusters
         self.scale = scale
