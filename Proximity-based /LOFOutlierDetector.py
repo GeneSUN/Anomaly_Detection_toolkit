@@ -15,8 +15,10 @@ class LOFOutlierDetector:
         Input dataset with shape (n_samples, n_features). Can be a NumPy array or a pandas DataFrame.
 
     contamination : float, default=0.1
-        The proportion of outliers in the data set. This acts as a filtering mechanism.
-
+        The proportion of outliers in the data set, marks the top contamination * n_samples as outliers.
+        For contamination='auto', it sets offset_ = -1.5 (if using the legacy version) or uses the algorithm from the reference paper 
+        This fixed offset corresponds roughly to LOF ≈ 1.5, meaning points with a score significantly above 1 (i.e., 50% higher than neighbors) are flagged as outliers 
+        
     scale : bool, default=True
         Whether to apply standard scaling to the data during preprocessing.
 
@@ -24,9 +26,9 @@ class LOFOutlierDetector:
         A fully specified LocalOutlierFactor model. If provided, this model will override the default configuration.
         Useful when you want to control all underlying LOF parameters.
     """
-    def __init__(self, X, contamination=0.1, scale=True, model=None):
+    def __init__(self, X, contamination=0.05, scale=True, model=None):
         self.X_raw = X.values if isinstance(X, pd.DataFrame) else X
-        self.contamination = contamination
+        self.contamination = contamination # 
         self.scale = scale
         self.model = model  # optionally passed by user
         self.is_outlier = None
