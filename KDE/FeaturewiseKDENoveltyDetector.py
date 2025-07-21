@@ -6,7 +6,7 @@ from sklearn.neighbors import KernelDensity
 
 class FeaturewiseKDENoveltyDetector:
     def __init__(self, df, feature_col="avg_4gsnr", time_col="hour", bandwidth=0.5,
-                 train_idx=None, new_idx=None, filter_percentile = 100100, threshold_percentile=100,
+                 train_idx=None, new_idx=None, filter_percentile = 100, threshold_percentile=100,
                  anomaly_direction="low"):
         """
         Parameters:
@@ -14,8 +14,8 @@ class FeaturewiseKDENoveltyDetector:
             feature_col (str): Column containing values to evaluate.
             time_col (str): Time column for plotting.
             bandwidth (float): Bandwidth for KDE.
-            train_idx (slice): Slice for training data.
-            new_idx (slice): Slice for new (test) data.
+            train_idx (slice): Slice for training data. None means all data as trainning
+            new_idx (slice): Slice for new (test) data. None means all data as testing
             filter_percentile (float): Percentile for filtering out high-end outliers in training set.
             threshold_percentile (float): Percentile for detect outlier in testing set.
             anomaly_direction (str): One of {"both", "high", "low"} to detect direction of anomaly.
