@@ -3,10 +3,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KernelDensity
 
-
 class FeaturewiseKDENoveltyDetector:
-    def __init__(self, df, feature_col="avg_4gsnr", time_col="hour", bandwidth=0.5,
-                 train_idx=None, new_idx=None, filter_percentile = 100, threshold_percentile=100,
+    def __init__(self, 
+                 df, 
+                 feature_col="avg_4gsnr", 
+                 time_col="hour", 
+                 bandwidth=0.5,
+                 train_idx="all", 
+                 new_idx="all", 
+                 filter_percentile=100, 
+                 threshold_percentile=100,
                  anomaly_direction="low"):
         """
         Parameters:
@@ -14,11 +20,11 @@ class FeaturewiseKDENoveltyDetector:
             feature_col (str): Column containing values to evaluate.
             time_col (str): Time column for plotting.
             bandwidth (float): Bandwidth for KDE.
-            train_idx (slice): Slice for training data. None means all data as trainning
-            new_idx (slice): Slice for new (test) data. None means all data as testing
+            train_idx (slice, list, int, or "all"): Indices for training data. "all" uses the entire DataFrame.
+            new_idx (slice, list, int, or "all"): Indices for test data. "all" uses the entire DataFrame.
             filter_percentile (float): Percentile for filtering out high-end outliers in training set.
-            threshold_percentile (float): Percentile for detect outlier in testing set.
-            anomaly_direction (str): One of {"both", "high", "low"} to detect direction of anomaly.
+            threshold_percentile (float): Percentile to apply directional outlier threshold.
+            anomaly_direction (str): One of {"both", "high", "low"} to control direction of anomaly detection.
         """
         self.df = df
         self.feature_col = feature_col
@@ -31,6 +37,7 @@ class FeaturewiseKDENoveltyDetector:
         self.anomaly_direction = anomaly_direction
         self.kde = None
         self.threshold = None
+        self.outlier_mask = None
 
     def _filter_train_df(self, train_df):
         if self.filter_percentile < 100:
@@ -39,10 +46,19 @@ class FeaturewiseKDENoveltyDetector:
         return train_df
 
     def fit(self):
-        # Slice training and new data
-        train_df = self.df.iloc[self.train_idx] if self.train_idx is not None else self.df.iloc[:-1]
+        # Handle "all" option for training and testing index
+        if self.train_idx == "all":
+            train_df = self.df.copy()
+        else:
+            train_df = self.df.iloc[self.train_idx]
         train_df = self._filter_train_df(train_df)
-        new_df = self.df.iloc[self.new_idx] if self.new_idx is not None else self.df.iloc[-1:]
+
+        if self.new_idx == "all":
+            new_df = self.df.copy()
+            new_indices = self.df.index
+        else:
+            new_df = self.df.iloc[self.new_idx]
+            new_indices = self.df.iloc[self.new_idx].index
 
         # Fit KDE on training data
         X_train = train_df[self.feature_col].values.reshape(-1, 1)
@@ -70,23 +86,32 @@ class FeaturewiseKDENoveltyDetector:
         else:  # both
             direction_mask = (new_values < lower_threshold) | (new_values > upper_threshold)
 
+        # Final anomaly mask
         final_outlier_mask = outlier_mask_kde & direction_mask
-
-        self.dens_new = dens_new
         self.outlier_mask = final_outlier_mask
 
-        return {
-            "new_densities": dens_new,
-            "threshold (1% quantile)": self.threshold,
-            "outlier_count": final_outlier_mask.sum(),
-            "total_new_points": len(dens_new),
-            "outlier_indices": list(np.where(final_outlier_mask)[0]),
-        }
+        is_outlier_col = pd.Series(False, index=self.df.index)
+        is_outlier_col.loc[new_indices] = final_outlier_mask
+        self.df["is_outlier"] = is_outlier_col
+
+        return self.df[self.df["is_outlier"]][["sn", self.time_col, self.feature_col, "is_outlier"]]
 
     def plot_line(self, sn_num=None):
         plt.figure(figsize=(10, 4))
-        plt.plot(self.df[self.time_col], self.df[self.feature_col], marker='o', label=self.feature_col)
-        if self.new_idx is not None:
+    
+        # Plot the full time series
+        plt.plot(self.df[self.time_col], self.df[self.feature_col], marker='o',
+                 label=self.feature_col, color='blue', alpha=0.6)
+    
+        # Overlay outlier points
+        if "is_outlier" in self.df.columns:
+            df_outliers = self.df[self.df["is_outlier"]]
+            if not df_outliers.empty:
+                plt.scatter(df_outliers[self.time_col], df_outliers[self.feature_col],
+                            color='red', label='Outlier', zorder=5, s=60, marker='X')
+    
+        # Optionally highlight vertical bars for test indices
+        if self.new_idx != "all":
             if isinstance(self.new_idx, int):
                 idxs = [self.new_idx]
             elif isinstance(self.new_idx, slice):
@@ -94,7 +119,9 @@ class FeaturewiseKDENoveltyDetector:
             else:
                 idxs = self.new_idx
             for idx in idxs:
-                plt.axvline(self.df.iloc[idx][self.time_col], color='red', linestyle='-', alpha=0.1)
+                plt.axvline(self.df.iloc[idx][self.time_col], color='gray', linestyle='--', alpha=0.2)
+    
+        # Plot formatting
         title = f"Line Plot: {self.feature_col} Over Time"
         if sn_num:
             title += f" ({sn_num})"
@@ -104,12 +131,20 @@ class FeaturewiseKDENoveltyDetector:
         plt.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()
+        plt.grid(True)
         plt.show()
 
     def plot_kde(self):
-        train_df = self.df.iloc[self.train_idx] if self.train_idx is not None else self.df.iloc[:-1]
+        if self.train_idx == "all":
+            train_df = self.df.copy()
+        else:
+            train_df = self.df.iloc[self.train_idx]
         train_df = self._filter_train_df(train_df)
-        new_df = self.df.iloc[self.new_idx] if self.new_idx is not None else self.df.iloc[-1:]
+
+        if self.new_idx == "all":
+            new_df = self.df.copy()
+        else:
+            new_df = self.df.iloc[self.new_idx]
 
         X_train = train_df[self.feature_col].values.reshape(-1, 1)
         X_new = new_df[self.feature_col].values.reshape(-1, 1)
@@ -142,6 +177,7 @@ class FeaturewiseKDENoveltyDetector:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+
 
 """
 detector = FeaturewiseKDENoveltyDetector(
