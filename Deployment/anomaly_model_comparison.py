@@ -15,16 +15,11 @@ from MailSender import MailSender
 
 sys.path.append('/usr/apps/vmas/scripts/ZS/owl_anomaly') 
 
-#from FeaturewiseKDENoveltyDetector import FeaturewiseKDENoveltyDetector
-#from DBSCANOutlierDetector import DBSCANOutlierDetector
-#from ARIMAAnomalyDetector import ARIMAAnomalyDetector
-#from EWMAAnomalyDetector import EWMAAnomalyDetector
-from OutlierDetector import (
-    FeaturewiseKDENoveltyDetector,
-    DBSCANOutlierDetector,
-    ARIMAAnomalyDetector,
-    EWMAAnomalyDetector
-)
+from FeaturewiseKDENoveltyDetector import FeaturewiseKDENoveltyDetector
+from DBSCANOutlierDetector import DBSCANOutlierDetector
+from ARIMAAnomalyDetector import ARIMAAnomalyDetector
+from EWMAAnomalyDetector import EWMAAnomalyDetector
+
 
 def prepare_data(df, min_rows=100):
 
@@ -85,20 +80,20 @@ def detect_anomaly_group(sn_val, group, method, time_col, feature_col, feature_c
     else:
         raise ValueError(f"Unsupported method: {method}")
 
-    return {
-        "sn": sn_val,
-        "outlier_count": output["outlier_count"],
-        "total_new_points": output["total_new_points"]
-    }
+    return output
 
 def detect_anomalies_parallel(df, method, feature_col, time_col, feature_cols, n_workers, num_recent_points):
-    args = [(sn, group, method, time_col, feature_col, feature_cols, num_recent_points) for sn, group in df.groupby("sn")]
+    args = [(sn, group, method, time_col, feature_col, feature_cols, num_recent_points)
+            for sn, group in df.groupby("sn")]
     results = []
+
     with ProcessPoolExecutor(max_workers=n_workers) as executor:
         futures = [executor.submit(detect_anomaly_group, *arg) for arg in args]
         for future in as_completed(futures):
-            results.append(future.result())
-    return results
+            result_df = future.result()  # a DataFrame from each group
+            if result_df is not None and not result_df.empty:
+                results.append(result_df)
+    return pd.concat(results, ignore_index=True) if results else pd.DataFrame()
 
 
 def run_detection_experiment(df, methods, feature_col, feature_cols, time_col, worker_list, result_base_path, num_recent_points):
@@ -108,16 +103,22 @@ def run_detection_experiment(df, methods, feature_col, feature_cols, time_col, w
             print(f"\nRunning {method} with {workers} workers...")
             start = time.time()
 
-            results = detect_anomalies_parallel(df, method, feature_col, time_col, feature_cols, workers, num_recent_points)
+            final_df = detect_anomalies_parallel(df, method, feature_col, time_col, feature_cols, workers, num_recent_points)
             duration = time.time() - start
 
-            df_result = pd.DataFrame(results)
-            spark_df = spark.createDataFrame(df_result)
-            output_path = f"{result_base_path}/{feature_col}/{method}/{method}_{workers}"
-            spark_df.write.mode("overwrite").parquet(output_path)
+            if not final_df.empty:
+                spark_df = spark.createDataFrame(final_df)
+                output_path = f"{result_base_path}/{feature_col}/{method}/{method}_{workers}"
+                spark_df.write.mode("overwrite").parquet(output_path)
 
-            summary.append({"method": method, "workers": workers, "duration_sec": duration, "num_serial_numbers": len(results)})
-            print(f"Completed in {duration:.2f}s, SNs: {len(results)}")
+            summary.append({
+                "method": method,
+                "workers": workers,
+                "duration_sec": duration,
+                "num_outliers": len(final_df),
+                "num_serial_numbers": df["sn"].nunique()
+            })
+            print(f"Completed in {duration:.2f}s, Outliers: {len(final_df)}")
 
     return pd.DataFrame(summary)
 
@@ -132,11 +133,10 @@ if __name__ == "__main__":
     METHODS = ["KDE", "EWMA","DBSCAN","ARIMA"]
     METHODS = ["EWMA",]
     WORKER_LIST = [25]
+    result_path = "/user/ZheS//owl_anomally//zanomally_result_sliced/"
 
     #input_path = "/user/ZheS//owl_anomally/capacity_pplan50127_sliced/"
     input_path = "/user/ZheS//owl_anomally/throughput_pplan50127_sliced/"
-    result_path = "/user/ZheS//owl_anomally//zanomally_result_sliced/"
-
     df_spark = spark.read.parquet(input_path).drop("sn").withColumnRenamed("slice_id", "sn")
     df_spark = df_spark.select(["sn", TIME_COL] + FEATURE_COLS)
     df_filtered = prepare_data(df_spark)
