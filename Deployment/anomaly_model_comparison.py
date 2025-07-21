@@ -14,6 +14,11 @@ sys.path.append('/usr/apps/vmas/scripts/ZS')
 from MailSender import MailSender
 
 sys.path.append('/usr/apps/vmas/scripts/ZS/owl_anomaly') 
+
+#from FeaturewiseKDENoveltyDetector import FeaturewiseKDENoveltyDetector
+#from DBSCANOutlierDetector import DBSCANOutlierDetector
+#from ARIMAAnomalyDetector import ARIMAAnomalyDetector
+#from EWMAAnomalyDetector import EWMAAnomalyDetector
 from OutlierDetector import (
     FeaturewiseKDENoveltyDetector,
     DBSCANOutlierDetector,
@@ -63,14 +68,14 @@ def detect_anomaly_group(sn_val, group, method, time_col, feature_col, feature_c
                                 eps=2, 
                                 min_samples=2, 
                                 recent_window_size=num_recent_points, 
-                                scale=False, 
+                                scale=True, 
                                 filter_percentile=98)
         output = detector.fit()
 
     elif method == "EWMA":
         detector = EWMAAnomalyDetector(group_sorted, 
                                         feature=feature_col, 
-                                        recent_window_size=num_recent_points, 
+                                        recent_window_size = "all",
                                         window=72,
                                         no_of_stds=2.6, 
                                         n_shift=1, 
@@ -117,18 +122,19 @@ def run_detection_experiment(df, methods, feature_col, feature_cols, time_col, w
     return pd.DataFrame(summary)
 
 if __name__ == "__main__":
-    spark = SparkSession.builder.appName('AnomalyDetection').config("spark.ui.port", "24041").getOrCreate()
+    spark = SparkSession.builder.appName('Zhe_AnomalyDetection').config("spark.ui.port", "24041").getOrCreate()
     spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
     TIME_COL = "hour"
-    FEATURE_COLS = ["avg_4gsnr", "avg_5gsnr"]
-    FEATURE_COL = "avg_4gsnr"
+    FEATURE_COLS = ["TotalBytesReceived", "TotalBytesSent"]
+    FEATURE_COL = "TotalBytesReceived"
     NUM_RECENT_POINTS = 1
     METHODS = ["KDE", "EWMA","DBSCAN","ARIMA"]
-    METHODS = ["ARIMA"]
-    WORKER_LIST = [50]
+    METHODS = ["EWMA",]
+    WORKER_LIST = [25]
 
-    input_path = "/user/ZheS//owl_anomally/capacity_pplan50127_sliced/"
+    #input_path = "/user/ZheS//owl_anomally/capacity_pplan50127_sliced/"
+    input_path = "/user/ZheS//owl_anomally/throughput_pplan50127_sliced/"
     result_path = "/user/ZheS//owl_anomally//zanomally_result_sliced/"
 
     df_spark = spark.read.parquet(input_path).drop("sn").withColumnRenamed("slice_id", "sn")
