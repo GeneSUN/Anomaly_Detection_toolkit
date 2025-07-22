@@ -177,7 +177,7 @@ class FeaturewiseKDENoveltyDetector:
 
         plt.figure(figsize=(10, 5))
         plt.plot(x_vals, dens, label="KDE Density Curve")
-        plt.axhline(self.threshold, color='red', linestyle='-.', label=f"Threshold (1%)")
+        plt.axhline(self.threshold, color='red', linestyle='-.', label=f"Threshold ({100-self.threshold_percentile}%)")
 
         label_added = False
         outlier_label_added = False
