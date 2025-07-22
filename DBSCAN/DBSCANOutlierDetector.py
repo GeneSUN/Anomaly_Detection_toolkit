@@ -4,13 +4,12 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 class DBSCANOutlierDetector:
     """
-    DBSCAN-based outlier detection for time series with recent window focus.
-    Supports optional standardization and percentile-based training data filtering.
-    
+    DBSCAN-based outlier detection for time series with train/test window flexibility.
+
     Parameters
     ----------
     df : pd.DataFrame
@@ -21,8 +20,14 @@ class DBSCANOutlierDetector:
         Neighborhood radius parameter for DBSCAN.
     min_samples : int
         Minimum number of points to form a core point in DBSCAN.
-    recent_window_size : int
-        Number of most recent points to evaluate for outliers.
+    train_idx : int or str
+        Number of initial rows to use for training, or "all".
+    test_idx : int or str
+        Number of most recent rows to use for testing, or "all".
+    time_col : str
+        Name of timestamp column.
+    feature_col : str
+        Name of the primary feature column for output.
     scale : bool
         Whether to standardize features.
     filter_percentile : float
@@ -35,7 +40,10 @@ class DBSCANOutlierDetector:
         features: List[str],
         eps: float = 0.5,
         min_samples: int = 5,
-        recent_window_size: int = 24,
+        train_idx: Union[int, str] = "all",
+        recent_window_size: Union[int, str] = 24,
+        time_col: str = "time",
+
         scale: bool = False,
         filter_percentile: float = 100,
     ):
@@ -43,7 +51,10 @@ class DBSCANOutlierDetector:
         self.features = features
         self.eps = eps
         self.min_samples = min_samples
-        self.recent_window_size = recent_window_size
+        self.train_idx = train_idx
+        self.test_idx = recent_window_size
+        self.time_col = time_col
+
         self.scale = scale
         self.filter_percentile = filter_percentile
 
@@ -71,33 +82,39 @@ class DBSCANOutlierDetector:
         return self.scaler.fit_transform(X_train), self.scaler.transform(X_test)
 
     def _split_data(self):
-        df_train = self._apply_percentile_filter(self.df.iloc[:-self.recent_window_size])
-        df_test = self.df.iloc[-self.recent_window_size:]
+        if self.train_idx == "all":
+            df_train = self.df
+        else:
+            df_train = self.df.iloc[:self.train_idx]
+
+        if self.test_idx == "all":
+            df_test = self.df
+        else:
+            df_test = self.df.iloc[-self.test_idx:]
+
+        df_train = self._apply_percentile_filter(df_train)
         self.test_indices = df_test.index
 
         X_train = df_train[self.features].values
         X_test = df_test[self.features].values
         self.train_X, self.test_X = self._apply_scaling(X_train, X_test)
 
-    def fit(self) -> dict:
+    def fit(self) -> pd.DataFrame:
         self._split_data()
 
         self.dbscan_model = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(self.train_X)
         core_samples = self.train_X[self.dbscan_model.core_sample_indices_]
 
-
         self.labels_ = np.array([
-            -1 if np.min(np.linalg.norm(core_samples - x, axis=1)) > self.eps else 0
-            for x in self.test_X
-        ])
+                                    -1 if np.min(np.linalg.norm(core_samples - x, axis=1)) > self.eps else 0
+                                    for x in self.test_X
+                                ])
         self.outlier_mask = self.labels_ == -1
 
-        return {
-            "new_labels": self.labels_.tolist(),
-            "outlier_count": int(np.sum(self.outlier_mask)),
-            "total_new_points": len(self.test_X),
-            "outlier_indices": self.test_indices[self.outlier_mask].tolist(),
-        }
+        self.df["is_outlier"] = False
+        self.df.loc[self.test_indices[self.outlier_mask], "is_outlier"] = True
+
+        return self.df[self.df["is_outlier"]][["sn", self.time_col,  "is_outlier"] + self.features]
     
     def plot_scatter(self, use_scaled: bool = False):
         """
@@ -119,13 +136,20 @@ class DBSCANOutlierDetector:
             X_train_plot = self.train_X
             X_test_plot = self.test_X
         else:
-            X_train_plot = self.df.iloc[:-self.recent_window_size][self.features].values
-            X_test_plot = self.df.iloc[-self.recent_window_size:][self.features].values
+            if self.test_idx == "all":
+                X_train_plot = np.empty((0, len(self.features)))  # No train set
+                X_test_plot = self.df[self.features].values
+            else:
+                X_train_plot = self.df.iloc[:-self.test_idx][self.features].values
+                X_test_plot = self.df.iloc[-self.test_idx:][self.features].values
     
         plt.figure(figsize=(8, 6))
-        plt.scatter(X_train_plot[:, 0], X_train_plot[:, 1], c='blue', label='Train Inliers')
-        plt.scatter(X_train_plot[train_outliers, 0], X_train_plot[train_outliers, 1],
-                    c='gray', label='Train Outliers', alpha=0.3)
+    
+        if X_train_plot.shape[0] > 0:
+            plt.scatter(X_train_plot[:, 0], X_train_plot[:, 1], c='blue', label='Train Inliers')
+            plt.scatter(X_train_plot[train_outliers, 0], X_train_plot[train_outliers, 1],
+                        c='gray', label='Train Outliers', alpha=0.3)
+    
         plt.scatter(X_test_plot[~self.outlier_mask, 0], X_test_plot[~self.outlier_mask, 1],
                     c='green', label='Test Inliers')
         plt.scatter(X_test_plot[self.outlier_mask, 0], X_test_plot[self.outlier_mask, 1],
@@ -134,14 +158,16 @@ class DBSCANOutlierDetector:
         plt.xlabel(self.features[0])
         if len(self.features) > 1:
             plt.ylabel(self.features[1])
-        plt.title(f"DBSCAN Outlier Detection (Last {self.recent_window_size} Points)")
+        test_size_display = self.test_idx if isinstance(self.test_idx, int) else "All"
+        plt.title(f"DBSCAN Outlier Detection (Test: {test_size_display})")
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
         plt.show()
 
+
     
-    def plot_timeseries(self, time_col: str, feature: str = None):
+    def plot_timeseries(self, time_col: str = None, feature: str = None):
         """
         Plot time series with DBSCAN-detected outliers from the test window.
         
@@ -159,6 +185,9 @@ class DBSCANOutlierDetector:
             feature = self.features[0]
         elif feature not in self.df.columns:
             raise ValueError(f"Feature '{feature}' not found in the dataframe.")
+    
+        if time_col is None:
+            time_col = self.time_col
     
         ts_df = self.df.copy()
         ts_df["outlier"] = False
