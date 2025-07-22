@@ -1,8 +1,12 @@
-from typing import List, Tuple
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, FloatType, BooleanType
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import sys
+from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode,last
 
 class EWMAAnomalyDetector:
     """
@@ -23,22 +27,21 @@ class EWMAAnomalyDetector:
         self,
         df,
         feature,
-        recent_window_size=600,  # Can also be 'all' or None
+        timestamp_col="time",
+        recent_window_size=600,
         window=10,
         no_of_stds=2.0,
         n_shift=1,
         anomaly_direction="low",
         scaler=None
     ):
-        assert anomaly_direction in {"both", "high", "low"}, \
-            "anomaly_direction must be one of {'both', 'high', 'low'}"
-        assert scaler in {None, "standard", "minmax"} or hasattr(scaler, "fit_transform"), \
-            "scaler must be 'standard', 'minmax', None, or a custom scaler with fit_transform"
-        assert isinstance(recent_window_size, (int, type(None), str)), \
-            "recent_window_size must be int, None, or 'all'"
+        assert anomaly_direction in {"both", "high", "low"}
+        assert scaler in {None, "standard", "minmax"} or hasattr(scaler, "fit_transform")
+        assert isinstance(recent_window_size, (int, type(None), str))
 
         self.df_original = df.copy()
         self.feature = feature
+        self.timestamp_col = timestamp_col
         self.window = window
         self.no_of_stds = no_of_stds
         self.n_shift = n_shift
@@ -46,12 +49,10 @@ class EWMAAnomalyDetector:
         self.anomaly_direction = anomaly_direction
         self.df_ = None
         self.scaler_type = scaler
-        self._scaler = None  # Actual scaler object
+        self._scaler = None
 
     def _apply_scaler(self, df):
         df = df.copy()
-        self._scaler = None
-
         if self.scaler_type is None:
             df['feature_scaled'] = df[self.feature]
         else:
@@ -60,8 +61,7 @@ class EWMAAnomalyDetector:
             elif self.scaler_type == "minmax":
                 self._scaler = MinMaxScaler()
             else:
-                self._scaler = self.scaler_type  # custom
-
+                self._scaler = self.scaler_type
             df['feature_scaled'] = self._scaler.fit_transform(df[[self.feature]])
         return df
 
@@ -81,18 +81,16 @@ class EWMAAnomalyDetector:
 
     def _detect_anomalies(self, df):
         if self.anomaly_direction == "high":
-            df['anomaly'] = df['feature_scaled'] > df['UCL']
+            df['is_outlier'] = df['feature_scaled'] > df['UCL']
         elif self.anomaly_direction == "low":
-            df['anomaly'] = df['feature_scaled'] < df['LCL']
-        else:  # both
-            df['anomaly'] = (df['feature_scaled'] > df['UCL']) | (df['feature_scaled'] < df['LCL'])
+            df['is_outlier'] = df['feature_scaled'] < df['LCL']
+        else:
+            df['is_outlier'] = (df['feature_scaled'] > df['UCL']) | (df['feature_scaled'] < df['LCL'])
         return df
 
     def fit(self):
         df = self._add_ewma()
         df = self._detect_anomalies(df)
-
-        # Drop rows with NaNs due to shift and rolling
         df_clean = df.dropna(subset=["EMA", "UCL", "LCL", "feature_scaled"])
 
         if self.recent_window_size in [None, "all"]:
@@ -100,16 +98,13 @@ class EWMAAnomalyDetector:
         else:
             recent_df = df_clean.tail(self.recent_window_size)
 
-        outliers = recent_df[recent_df['anomaly']]
-        self.df_ = df  # Keep full version with possible NaNs for plotting
+        self.df_ = df
+        return recent_df[recent_df["is_outlier"]][["sn", self.timestamp_col, self.feature, "is_outlier"]]
 
-        return {
-            "outlier_count": len(outliers),
-            "total_new_points": len(recent_df),
-            "outlier_indices": outliers.index.tolist()
-        }
 
-    def plot(self, timestamp_col="timestamp", figsize=(12, 6)):
+    def plot(self, timestamp_col= None, figsize=(12, 6)):
+        if timestamp_col is None:
+            timestamp_col = self.timestamp_col
         if self.df_ is None:
             raise ValueError("Run `.fit()` before plotting.")
         df = self.df_
@@ -117,22 +112,85 @@ class EWMAAnomalyDetector:
         plt.figure(figsize=figsize)
         plt.plot(df[timestamp_col], df[self.feature], label='Original', color='blue', alpha=0.6)
 
-        # Inverse-transform if scaled
-        ema = self._inverse_scaler(df['EMA'].fillna(0))
-        ucl = self._inverse_scaler(df['UCL'].fillna(0))
-        lcl = self._inverse_scaler(df['LCL'].fillna(0))
+        ema = self._inverse_scaler(df['EMA'] )
+        ucl = self._inverse_scaler(df['UCL'] )
+        lcl = self._inverse_scaler(df['LCL'] )
 
         plt.plot(df[timestamp_col], ema, label='EWMA', color='orange')
         plt.plot(df[timestamp_col], ucl, label='UCL', color='green', linestyle='--')
         plt.plot(df[timestamp_col], lcl, label='LCL', color='red', linestyle='--')
 
-        anomalies = df[df['anomaly']]
+        anomalies = df[df['is_outlier']]
         plt.scatter(anomalies[timestamp_col], anomalies[self.feature], color='red', label='Anomalies', zorder=5)
 
-        plt.title(f"EWMA Anomaly Detection ({self.anomaly_direction})")
+        plt.title(f"EWMA Anomaly Detection ({self.anomaly_direction}) {self.feature}")
         plt.xlabel('Time')
         plt.ylabel(self.feature)
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+
+
+# ------------------------------
+# Main Entry Point for PySpark
+# ------------------------------
+def convert_string_numerical(df, String_typeCols_List):
+    from pyspark.sql.functions import col
+    return df.select([col(c).cast('double') if c in String_typeCols_List else col(c) for c in df.columns])
+
+
+if __name__ == "__main__":
+    spark = SparkSession.builder.appName('Zhe_EWMA_Anomaly_Detection')\
+                        .config("spark.ui.port", "24041")\
+                        .getOrCreate()
+    spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+
+    FEATURE_COL = "4GRSRP"
+    TIME_COL = "time"
+
+    # 1. Read and preprocess data from date list
+    start_date = datetime.strptime("2025-07-07", "%Y-%m-%d")
+    end_date = datetime.strptime("2025-07-13", "%Y-%m-%d")
+    date_list = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+                for i in range((end_date - start_date).days + 1)]
+    heartbeat_base = "/user/ZheS//owl_anomally/df_adhoc_heartbeat/"
+    paths = [heartbeat_base+date_str for date_str in date_list]
+
+    df_raw = spark.read.parquet(*paths)
+    df_converted = convert_string_numerical(df_raw, [FEATURE_COL])
+    df_filtered = df_converted.select("sn", TIME_COL, FEATURE_COL)
+    
+    # 2. Define output schema
+    schema = StructType([
+                        StructField("sn", StringType(), True),
+                        StructField(TIME_COL, TimestampType(), True),
+                        StructField(FEATURE_COL, FloatType(), True),
+                        StructField("is_outlier", BooleanType(), True)
+                    ])
+
+    # 3. UDF for applyInPandas
+    def detect_ewma_outliers(group_df: pd.DataFrame) -> pd.DataFrame:
+        if len(group_df) < 10:
+            return pd.DataFrame([], columns=schema.fieldNames())
+        try:
+            group_df = group_df.sort_values(TIME_COL)  # ✅ Ensure time ordering
+            detector = EWMAAnomalyDetector(df = group_df, 
+                                            feature=FEATURE_COL, 
+                                            timestamp_col = TIME_COL,
+                                            recent_window_size="all",
+                                            window=72,
+                                            no_of_stds=3.0,
+                                            n_shift=1,
+                                            anomaly_direction="low",
+                                            scaler="standard"
+                                                            )
+            return detector.fit()
+        except Exception:
+            return pd.DataFrame([], columns=schema.fieldNames())
+
+    # 4. Run EWMA detection using applyInPandas
+    df_anomaly_result = df_filtered.groupBy("sn").applyInPandas(detect_ewma_outliers, schema=schema)
+    df_anomaly_result.show()
+    # 5. Write results
+    df_anomaly_result.write.mode("overwrite").parquet(f"/user/ZheS/owl_anomally/dailyrawreboot/outlier_{FEATURE_COL}/EWMA")
