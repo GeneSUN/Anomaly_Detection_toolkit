@@ -5,6 +5,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from typing import List, Tuple, Union
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, FloatType, BooleanType
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode,last
+from datetime import datetime, timedelta
 
 class DBSCANOutlierDetector:
     """
@@ -114,7 +118,7 @@ class DBSCANOutlierDetector:
         self.df["is_outlier"] = False
         self.df.loc[self.test_indices[self.outlier_mask], "is_outlier"] = True
 
-        return self.df[self.df["is_outlier"]][["sn", self.time_col,  "is_outlier"] + self.features]
+        return self.df[self.df["is_outlier"]][["sn", self.time_col] + self.features + ["is_outlier"]]
     
     def plot_scatter(self, use_scaled: bool = False):
         """
@@ -208,4 +212,64 @@ class DBSCANOutlierDetector:
         plt.tight_layout()
         plt.show()
 
+def convert_string_numerical(df, String_typeCols_List):
+    from pyspark.sql.functions import col
+    return df.select([col(c).cast('double') if c in String_typeCols_List else col(c) for c in df.columns])
 
+
+
+if __name__ == "__main__":
+    spark = SparkSession.builder.appName('Zhe_DBSCAN_Anomaly_Detection')\
+                        .config("spark.ui.port", "24041")\
+                        .getOrCreate()
+    spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+
+    FEATURE_COLS = ["RSRQ","4GRSRQ"]
+    TIME_COL = "time"
+
+    # 1. Read and preprocess data from date list
+    start_date = datetime.strptime("2025-07-07", "%Y-%m-%d")
+    end_date = datetime.strptime("2025-07-13", "%Y-%m-%d")
+    date_list = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+                for i in range((end_date - start_date).days + 1)]
+    heartbeat_base = "/user/ZheS//owl_anomally/df_adhoc_heartbeat/"
+    paths = [heartbeat_base+date_str for date_str in date_list]
+
+    df_raw = spark.read.parquet(*paths)
+    df_converted = convert_string_numerical(df_raw, FEATURE_COLS)
+    df_filtered = df_converted.select(["sn", TIME_COL] + FEATURE_COLS)\
+                                .orderBy( "sn",TIME_COL )
+    
+    # 2. Define output schema
+    schema = StructType([
+                        StructField("sn", StringType(), True),
+                        StructField(TIME_COL, TimestampType(), True),
+                        StructField(FEATURE_COLS[0], FloatType(), True),
+                        StructField(FEATURE_COLS[1], FloatType(), True),
+                        StructField("is_outlier", BooleanType(), True)
+                    ])
+
+    # 3. UDF for applyInPandas
+    def udf_detect_DBSCAN_outliers(group_df: pd.DataFrame) -> pd.DataFrame:
+        if len(group_df) < 10:
+            return pd.DataFrame([], columns=schema.fieldNames())
+        try:
+            group_df = group_df.sort_values(TIME_COL)  # ✅ Ensure time ordering
+            detector = DBSCANOutlierDetector( df = group_df, 
+                                    features= FEATURE_COLS, 
+                                    eps=2, 
+                                    min_samples=2, 
+                                    train_idx = "all",
+                                    recent_window_size="all", 
+                                    time_col = "time",
+                                    scale=False, 
+                                    filter_percentile=100)
+            return detector.fit()
+        except Exception:
+            return pd.DataFrame([], columns=schema.fieldNames())
+
+    # 4. Run EWMA detection using applyInPandas
+    df_anomaly_result = df_filtered.groupBy("sn").applyInPandas(udf_detect_DBSCAN_outliers, schema=schema)
+    df_anomaly_result.show()
+    # 5. Write results
+    df_anomaly_result.write.mode("overwrite").parquet(f"/user/ZheS/owl_anomally/dailyrawreboot/outlier_{FEATURE_COLS[0]}_{FEATURE_COLS[1]}/DBSCAN")
