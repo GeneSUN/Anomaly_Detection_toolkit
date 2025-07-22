@@ -2,6 +2,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode,last
+from pyspark.sql.functions import pandas_udf, PandasUDFType
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, FloatType, BooleanType
 
 from datetime import datetime, timedelta, date
 
@@ -209,41 +211,38 @@ if __name__ == "__main__":
                         .getOrCreate()
     spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
-
+    FEATURE_COL = "4GRSRP"
+    TIME_COL = "time"
     
-    # 1. Generate date list
-    start_date = datetime.strptime("2025-07-09", "%Y-%m-%d")
+    # 1. Read and preprocess data from date list
+    start_date = datetime.strptime("2025-07-07", "%Y-%m-%d")
     end_date = datetime.strptime("2025-07-13", "%Y-%m-%d")
     date_list = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end_date - start_date).days + 1)]
     heartbeat_base = "/user/ZheS//owl_anomally/df_adhoc_heartbeat/"
     paths = [heartbeat_base + date_str for date_str in date_list]
 
-    # 2. Read and preprocess data
     df_raw = spark.read.parquet(*paths)
-    df_converted = convert_string_numerical(df_raw, ["4GRSRP"])
-    df_filtered = df_converted.select("sn", "time", "4GRSRP")
-
-    from pyspark.sql.functions import pandas_udf, PandasUDFType
-    from pyspark.sql.types import StructType, StructField, StringType, TimestampType, FloatType, BooleanType
-    import pandas as pd
-
+    df_converted = convert_string_numerical(df_raw, [FEATURE_COL])
+    df_filtered = df_converted.select("sn", TIME_COL, FEATURE_COL)
 
     # 2. Define output schema
     schema = StructType([
                         StructField("sn", StringType(), True),
-                        StructField("time", TimestampType(), True),
-                        StructField("4GRSRP", FloatType(), True),
+                        StructField(TIME_COL, TimestampType(), True),
+                        StructField(FEATURE_COL, FloatType(), True),
                         StructField("is_outlier", BooleanType(), True)
                     ])
 
+    # 3. UDF
     def detect_kde_outliers(group_df: pd.DataFrame) -> pd.DataFrame:
         if len(group_df) < 10:
             return pd.DataFrame([], columns=schema.fieldNames())
         try:
+            group_df = group_df.sort_values(TIME_COL)  # ✅ Ensure time ordering
             detector = FeaturewiseKDENoveltyDetector(
                 df=group_df,
-                feature_col="4GRSRP",
-                time_col="time",
+                feature_col=FEATURE_COL,
+                time_col=TIME_COL,
                 train_idx="all",
                 new_idx="all",
                 filter_percentile=100,
@@ -258,4 +257,7 @@ if __name__ == "__main__":
     df_anomaly_result = df_filtered.groupBy("sn").applyInPandas(detect_kde_outliers, schema=schema)
 
     # 5. Write to HDFS
-    df_anomaly_result.write.mode("overwrite").parquet("/user/ZheS/owl_anomally/output_kde_4GRSRP_applyInPandas")
+    df_anomaly_result.write.mode("overwrite").parquet(f"/user/ZheS/owl_anomally/dailyrawreboot/outlier_{FEATURE_COL}/kde")
+
+
+
