@@ -1,3 +1,10 @@
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode,last
+
+from datetime import datetime, timedelta, date
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -25,6 +32,19 @@ class FeaturewiseKDENoveltyDetector:
             filter_percentile (float): Percentile for filtering out high-end outliers in training set.
             threshold_percentile (float): Percentile to apply directional outlier threshold.
             anomaly_direction (str): One of {"both", "high", "low"} to control direction of anomaly detection.
+        
+        Example Usage:
+        detector = FeaturewiseKDENoveltyDetector(
+                                                df=your_df,
+                                                feature_col="avg_5gsnr",
+                                                time_col="hour",
+                                                train_idx=slice(0, 1068),
+                                                new_idx=slice(-26, None),
+                                                filter_percentile = 100,
+                                                threshold_percentile=95,
+                                                anomaly_direction="both"  # can be "low", "high", or "both"
+                                                )
+        result = detector.fit()
         """
         self.df = df
         self.feature_col = feature_col
@@ -179,16 +199,63 @@ class FeaturewiseKDENoveltyDetector:
         plt.show()
 
 
-"""
-detector = FeaturewiseKDENoveltyDetector(
-    df=your_df,
-    feature_col="avg_5gsnr",
-    time_col="hour",
-    train_idx=slice(0, 1068),
-    new_idx=slice(-26, None),
-    filter_percentile = 100,
-    threshold_percentile=95,
-    anomaly_direction="both"  # can be "low", "high", or "both"
-)
-result = detector.fit()
-"""
+def convert_string_numerical(df, String_typeCols_List): 
+    df = df.select([F.col(column).cast('double') if column in String_typeCols_List else F.col(column) for column in df.columns]) 
+    return df
+
+if __name__ == "__main__":
+    spark = SparkSession.builder.appName('Zhe_FeaturewiseKDENoveltyDetector')\
+                        .config("spark.ui.port", "24041")\
+                        .getOrCreate()
+    spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+
+
+    
+    # 1. Generate date list
+    start_date = datetime.strptime("2025-07-09", "%Y-%m-%d")
+    end_date = datetime.strptime("2025-07-13", "%Y-%m-%d")
+    date_list = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end_date - start_date).days + 1)]
+    heartbeat_base = "/user/ZheS//owl_anomally/df_adhoc_heartbeat/"
+    paths = [heartbeat_base + date_str for date_str in date_list]
+
+    # 2. Read and preprocess data
+    df_raw = spark.read.parquet(*paths)
+    df_converted = convert_string_numerical(df_raw, ["4GRSRP"])
+    df_filtered = df_converted.select("sn", "time", "4GRSRP")
+
+    from pyspark.sql.functions import pandas_udf, PandasUDFType
+    from pyspark.sql.types import StructType, StructField, StringType, TimestampType, FloatType, BooleanType
+    import pandas as pd
+
+
+    # 2. Define output schema
+    schema = StructType([
+                        StructField("sn", StringType(), True),
+                        StructField("time", TimestampType(), True),
+                        StructField("4GRSRP", FloatType(), True),
+                        StructField("is_outlier", BooleanType(), True)
+                    ])
+
+    def detect_kde_outliers(group_df: pd.DataFrame) -> pd.DataFrame:
+        if len(group_df) < 10:
+            return pd.DataFrame([], columns=schema.fieldNames())
+        try:
+            detector = FeaturewiseKDENoveltyDetector(
+                df=group_df,
+                feature_col="4GRSRP",
+                time_col="time",
+                train_idx="all",
+                new_idx="all",
+                filter_percentile=100,
+                threshold_percentile=95,
+                anomaly_direction="low"
+            )
+            return detector.fit()
+        except Exception:
+            return pd.DataFrame([], columns=schema.fieldNames())
+
+    # 4. Run anomaly detection in parallel
+    df_anomaly_result = df_filtered.groupBy("sn").applyInPandas(detect_kde_outliers, schema=schema)
+
+    # 5. Write to HDFS
+    df_anomaly_result.write.mode("overwrite").parquet("/user/ZheS/owl_anomally/output_kde_4GRSRP_applyInPandas")
