@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from pyod.models.auto_encoder_torch import AutoEncoder
+from matplotlib import cm
 
 class MultiTimeSeriesAutoencoder:
     def __init__(self,
@@ -153,6 +154,86 @@ class MultiTimeSeriesAutoencoder:
             "is_outlier": is_outlier
         }
 
+    def predict_and_compare_with_normal(self,
+                                        input_array: np.ndarray,
+                                        title_id: str = "",
+                                        n_normal_samples: int = 100,
+                                        normal_score_range: Optional[Tuple[float, float]] = None):
+        """
+        Predict anomaly score of an input time series and compare it with normal training samples.
+
+        Parameters
+        ----------
+        input_array : np.ndarray
+            Shape (1, time_steps). The new time series to evaluate.
+        title_id : str
+            Identifier for labeling the input series on the plot.
+        n_normal_samples : int
+            Number of normal training series to plot for comparison.
+        normal_score_range : tuple, optional
+            If provided, defines (min_score, max_score) range to select normal samples
+            from the training data. Overrides threshold-based selection.
+        """
+        if self.model is None or self.anomaly_scores is None:
+            raise ValueError("Model not trained. Call fit() first.")
+
+        # Ensure 2D shape for input
+        if input_array.ndim == 1:
+            input_array = input_array.reshape(1, -1)
+
+        if self.scaler:
+            input_array_scaled = self.scaler.transform(input_array)
+        else:
+            input_array_scaled = input_array
+
+        scores = self.model.decision_function(input_array_scaled)
+        labels = scores > self.threshold_scores
+
+        # Select normal samples from training
+        scores_all = self.anomaly_scores
+        if normal_score_range is not None:
+            min_score, max_score = normal_score_range
+            normal_idx = np.where((scores_all >= min_score) & (scores_all <= max_score))[0]
+        else:
+            normal_idx = np.where(scores_all <= self.threshold_scores)[0]
+
+        sample_n_normal = min(n_normal_samples, len(normal_idx))
+        if sample_n_normal == 0:
+            raise ValueError("No normal samples found in the specified range.")
+
+        selected_idx = np.random.choice(normal_idx, size=sample_n_normal, replace=False)
+        normal_samples = self.input_tensor[selected_idx, :, 0]
+
+        # Plot
+        plt.figure(figsize=(12, 5))
+        cmap = cm.get_cmap('viridis', sample_n_normal)
+        for i, series in enumerate(normal_samples):
+            plt.plot(series, color=cmap(i), alpha=0.5)
+
+        # Plot the input series
+        input_series = input_array[0]
+        label = 'Abnormal' if labels[0] else 'Normal'
+        color = 'red' if labels[0] else 'darkgreen'
+        plt.plot(input_series, linewidth=2.5, color=color, label=f"Input Series")
+
+        # Add annotation in bottom-right
+        annotation = (f"Score: {scores[0]:.4f}\n"
+                    f"Thresh: {self.threshold_scores:.4f}\n"
+                    f"Outlier: {label}")
+        plt.annotate(annotation,
+                    xy=(1.0, 0.0), xycoords='axes fraction',
+                    xytext=(-10, 10), textcoords='offset points',
+                    ha='right', va='bottom',
+                    fontsize=9,
+                    bbox=dict(boxstyle="round", fc="white", ec=color, alpha=0.8))
+
+        plt.title(f"Comparison of Input Series with Normal Samples")
+        plt.xlabel("Time Index")
+        plt.ylabel(self.feature)
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
     def plot_anomaly_score_distribution(self, bins=30, sample_size=10000, random_state=42):
         """
         Plot the distribution of anomaly scores (with optional downsampling).
@@ -295,88 +376,6 @@ class MultiTimeSeriesAutoencoder:
         axs[1].set_xlabel("Time Index")
         plt.tight_layout()
         plt.show()
-
-    def predict_and_compare_with_normal(self,
-                                        input_array: np.ndarray,
-                                        title_id: str = "",
-                                        n_normal_samples: int = 100,
-                                        normal_score_range: Optional[Tuple[float, float]] = None):
-        """
-        Predict anomaly score of an input time series and compare it with normal training samples.
-
-        Parameters
-        ----------
-        input_array : np.ndarray
-            Shape (1, time_steps). The new time series to evaluate.
-        title_id : str
-            Identifier for labeling the input series on the plot.
-        n_normal_samples : int
-            Number of normal training series to plot for comparison.
-        normal_score_range : tuple, optional
-            If provided, defines (min_score, max_score) range to select normal samples
-            from the training data. Overrides threshold-based selection.
-        """
-        if self.model is None or self.anomaly_scores is None:
-            raise ValueError("Model not trained. Call fit() first.")
-
-        # Ensure 2D shape for input
-        if input_array.ndim == 1:
-            input_array = input_array.reshape(1, -1)
-
-        if self.scaler:
-            input_array_scaled = self.scaler.transform(input_array)
-        else:
-            input_array_scaled = input_array
-
-        scores = self.model.decision_function(input_array_scaled)
-        labels = scores > self.threshold_scores
-
-        # Select normal samples from training
-        scores_all = self.anomaly_scores
-        if normal_score_range is not None:
-            min_score, max_score = normal_score_range
-            normal_idx = np.where((scores_all >= min_score) & (scores_all <= max_score))[0]
-        else:
-            normal_idx = np.where(scores_all <= self.threshold_scores)[0]
-
-        sample_n_normal = min(n_normal_samples, len(normal_idx))
-        if sample_n_normal == 0:
-            raise ValueError("No normal samples found in the specified range.")
-
-        selected_idx = np.random.choice(normal_idx, size=sample_n_normal, replace=False)
-        normal_samples = self.input_tensor[selected_idx, :, 0]
-
-        # Plot
-        plt.figure(figsize=(12, 5))
-        cmap = cm.get_cmap('viridis', sample_n_normal)
-        for i, series in enumerate(normal_samples):
-            plt.plot(series, color=cmap(i), alpha=0.5)
-
-        # Plot the input series
-        input_series = input_array[0]
-        label = 'Abnormal' if labels[0] else 'Normal'
-        color = 'red' if labels[0] else 'darkgreen'
-        plt.plot(input_series, linewidth=2.5, color=color, label=f"Input Series")
-
-        # Add annotation in bottom-right
-        annotation = (f"Score: {scores[0]:.4f}\n"
-                    f"Thresh: {self.threshold_scores:.4f}\n"
-                    f"Outlier: {label}")
-        plt.annotate(annotation,
-                    xy=(1.0, 0.0), xycoords='axes fraction',
-                    xytext=(-10, 10), textcoords='offset points',
-                    ha='right', va='bottom',
-                    fontsize=9,
-                    bbox=dict(boxstyle="round", fc="white", ec=color, alpha=0.8))
-
-        plt.title(f"Comparison of Input Series with Normal Samples")
-        plt.xlabel("Time Index")
-        plt.ylabel(self.feature)
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-
 
 
 
