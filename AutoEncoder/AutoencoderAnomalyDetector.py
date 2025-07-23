@@ -18,64 +18,112 @@ from pyod.models.auto_encoder_torch import AutoEncoder
 #spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
 class AutoencoderAnomalyDetector:
-    """
-    Autoencoder-based anomaly detection for univariate time series.
+    def __init__(self, 
+                 df: pd.DataFrame, 
+                 time_col: str, 
+                 feature: str, 
+                 n_lags: int = 24,
+                 model_params: Optional[dict] = None,
+                 model: Optional[object] = None,
+                 scaler: Union[str, object, None] = "standard",
+                 threshold_percentile = 99
+                 ):
+        """
+        Initialization.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input DataFrame containing the time series.
-    time_col : str
-        Name of the column containing timestamps.
-    feature : str
-        Name of the feature column to analyze.
-    n_lags : int
-        Number of lag observations to use as input.
-    model_params : dict, optional
-        Dictionary to override the default AutoEncoder settings.
-        Template:
-            model_params = {
-                "hidden_neurons": [144, 4, 4, 144],
-                "hidden_activation": "relu",     # activation function ('relu', 'sigmoid', etc.)
-                "epochs": 20,                    # number of training epochs
-                "batch_norm": True,              # whether to apply batch normalization
-                "learning_rate": 0.001,          # learning rate for optimizer
-                "batch_size": 32,                # batch size for training
-                "dropout_rate": 0.2              # dropout rate between layers
-            }
-    """
-
-    def __init__(self, df, time_col, feature, n_lags=24, model_params=None):
+        Parameters
+        ----------
+        df : pd.DataFrame
+        time_col : str
+        feature : str
+        n_lags : int
+        model_params : dict, optional
+        model : object, optional
+            If provided, this custom model will be used instead of the default autoencoder.
+        scaler : {'standard', 'minmax', object, None}
+            'standard' for StandardScaler, 'minmax' for MinMaxScaler,
+            a custom scaler instance (must implement fit_transform), or None.
+        """
         self.df_raw = df.copy()
         self.time_col = time_col
         self.feature = feature
         self.n_lags = n_lags
-
-        self.df = self._prepare_df()
-        self.input_data = self._generate_lagged_input()
-        self.scaler = StandardScaler()
-        self.input_data_scaled = pd.DataFrame(
-            self.scaler.fit_transform(self.input_data)
-        ).reset_index(drop=True)
-
-        self.model = self._init_model(model_params)
+        self.model_params = model_params
+        self.external_model = None
+        self.scaler_type = scaler
+        self.scaler = None
+        self.model = None
+        self.threshold_percentile = threshold_percentile
+        
+        self.df = None
+        self.input_data = None
+        self.input_data_scaled = None
+        
         self.anomaly_scores = None
-
-    def _prepare_df(self):
+        self.threshold_scores = None
+        
+    def _format_time_series(self):
         df = self.df_raw[[self.time_col, self.feature]].copy()
         df = df.rename(columns={self.time_col: "ds", self.feature: "y"})
         df["unique_id"] = "series_1"
         return df
 
-    def _generate_lagged_input(self):
-        series = self.df["y"]
-        input_data = [
-            series.iloc[i - self.n_lags:i].values
-            for i in range(self.n_lags, len(series))
-        ]
-        return np.array(input_data)
+    def _segment_time_series(self, series: pd.Series, window_type: str = "sliding") -> np.ndarray:
+        """
+        Generate lagged input sequences from a univariate time series.
+    
+        Parameters
+        ----------
+        series : pd.Series
+            Input univariate time series.
+        window_type : str
+            Type of windowing. Options:
+                - 'sliding': overlapping windows (default)
+                - 'block': non-overlapping segments
+    
+        Returns
+        -------
+        np.ndarray
+            2D array where each row is a lagged input sequence.
+        """
+        if window_type == "sliding":
+            return np.array([
+                series.iloc[i - self.n_lags:i].values
+                for i in range(self.n_lags, len(series))
+            ])
+        
+        elif window_type == "block":
+            num_blocks = len(series) // self.n_lags
+            return np.array([
+                series.iloc[i * self.n_lags : (i + 1) * self.n_lags].values
+                for i in range(num_blocks)
+            ])
+    
+        else:
+            raise ValueError("Invalid window_type. Choose 'sliding' or 'block'.")
 
-    def _init_model(self, custom_params=None):
+
+    def _apply_scaler(self, X: np.ndarray) -> np.ndarray:
+        if self.scaler_type is None:
+            return X
+        elif self.scaler_type == "standard":
+            self.scaler = StandardScaler()
+        elif self.scaler_type == "minmax":
+            from sklearn.preprocessing import MinMaxScaler
+            self.scaler = MinMaxScaler()
+        else:
+            self.scaler = self.scaler_type
+        return self.scaler.fit_transform(X)
+
+    def prepare(self):
+        self.df = self._format_time_series()
+        self.input_data = self._segment_time_series(self.df["y"])
+        self.input_data_scaled = self._apply_scaler(self.input_data)
+
+    def _init_model(self):
+        if self.external_model is not None:
+            return self.external_model
+
         default_params = {
             "hidden_neurons": [self.n_lags, 4, 4, self.n_lags],
             "hidden_activation": "relu",
@@ -85,17 +133,34 @@ class AutoencoderAnomalyDetector:
             "batch_size": 32,
             "dropout_rate": 0.2,
         }
-        if custom_params:
-            default_params.update(custom_params)
+        if self.model_params:
+            default_params.update(self.model_params)
         return AutoEncoder(**default_params)
 
-    def fit(self):
-        """Train the autoencoder model."""
+    def fit(self, threshold_percentile=None):
+        if self.input_data_scaled is None:
+            raise ValueError("Call prepare() before fit().")
+        if threshold_percentile is None:
+            threshold_percentile = self.threshold_percentile
+        
+        self.model = self._init_model()
         self.model.fit(self.input_data_scaled)
+        
         self.anomaly_scores = self.model.decision_scores_
+        self.threshold_scores = np.percentile(self.anomaly_scores, threshold_percentile)
+        
+    def predict(self, input_series: pd.Series) -> np.ndarray:
+        if self.model is None:
+            raise ValueError("Call fit() before predict().")
+            
+        input_matrix = self._segment_time_series(input_series)
+        
+        if self.scaler:
+            input_matrix = self.scaler.transform(input_matrix)
+        
+        return self.model.decision_function(input_matrix)
 
     def plot_score_distribution(self):
-        """Plot histogram of anomaly scores."""
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
         plt.figure(figsize=(10, 4))
@@ -108,16 +173,17 @@ class AutoencoderAnomalyDetector:
         plt.show()
 
     def plot_series_with_anomalies(self):
-        """Plot original time series with anomaly scores overlaid."""
+        
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
+        
         plt.figure(figsize=(16, 6))
         plt.plot(self.df['ds'], self.df['y'], label="Original Time Series", color="blue")
         plt.plot(
             self.df['ds'][self.n_lags:].values,
             self.anomaly_scores,
             color="orange",
-            label="Anomaly Score (Reconstruction Error)",
+            label="Anomaly Score",
             linewidth=2
         )
         plt.xlabel("Time")
@@ -127,47 +193,33 @@ class AutoencoderAnomalyDetector:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
-    
-    def get_anomaly_stats(self, threshold=None, percentile=95):
+
+    def get_anomaly_stats(self):
         """
-        Return a dictionary summarizing detected anomalies.
-    
-        Parameters
-        ----------
-        threshold : float, optional
-            Manual anomaly score threshold. If None, use percentile cutoff.
-        percentile : int
-            Percentile to define threshold if not manually provided (default is 95).
-    
-        Returns
-        -------
-        dict
-            {
-                "total_new_points": int,
-                "outlier_count": int,
-                "anomaly_indices": list,
-                "anomaly_timestamps": list,
-                "anomaly_values": list
-            }
+        Return anomaly records and scores.
         """
+        
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
     
-        if threshold is None:
-            threshold = np.percentile(self.anomaly_scores, percentile)
     
-        anomaly_flags = self.anomaly_scores > threshold
-        indices = np.where(anomaly_flags)[0]
-        
-        anomaly_df = self.df.iloc[self.n_lags:].iloc[indices]
+        is_outlier = self.anomaly_scores > self.threshold_scores
     
-        return {
-            "total_new_points": len(self.anomaly_scores),
-            "outlier_count": len(indices),
-            "anomaly_indices": indices.tolist(),
-            "anomaly_timestamps": anomaly_df['ds'].tolist(),
-            "anomaly_values": anomaly_df['y'].tolist()
-        }
+        # Create mask for valid rows depending on windowing type
+        if self.window_type == "sliding":
+            base_df = self.df_raw.iloc[self.n_lags:].copy()
+        else:  # "block"
+            total_windows = len(self.anomaly_scores)
+            base_df = self.df_raw.iloc[:total_windows * self.n_lags].copy()
+            base_df = base_df.groupby(np.arange(len(base_df)) // self.n_lags).last().reset_index(drop=True)
+    
+        base_df["anomaly_score"] = self.anomaly_scores
+        base_df["is_outlier"] = is_outlier
+
+    
+        anomaly_df = base_df[base_df["is_outlier"]][["sn", self.time_col, self.feature, "is_outlier"]]
+    
+        return anomaly_df
 
 
 if __name__ == "__main__":
