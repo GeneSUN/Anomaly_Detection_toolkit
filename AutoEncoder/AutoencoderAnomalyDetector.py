@@ -17,11 +17,13 @@ from sklearn.preprocessing import StandardScaler
 from pyod.models.auto_encoder_torch import AutoEncoder
 #spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
+
 class AutoencoderAnomalyDetector:
     def __init__(self, 
                  df: pd.DataFrame, 
                  time_col: str, 
                  feature: str, 
+                 window_type: str = "sliding",
                  n_lags: int = 24,
                  model_params: Optional[dict] = None,
                  model: Optional[object] = None,
@@ -47,6 +49,7 @@ class AutoencoderAnomalyDetector:
         self.df_raw = df.copy()
         self.time_col = time_col
         self.feature = feature
+        self.window_type = window_type
         self.n_lags = n_lags
         self.model_params = model_params
         self.external_model = None
@@ -68,7 +71,7 @@ class AutoencoderAnomalyDetector:
         df["unique_id"] = "series_1"
         return df
 
-    def _segment_time_series(self, series: pd.Series, window_type: str = "sliding") -> np.ndarray:
+    def _segment_time_series(self, series: pd.Series) -> np.ndarray:
         """
         Generate lagged input sequences from a univariate time series.
     
@@ -86,13 +89,13 @@ class AutoencoderAnomalyDetector:
         np.ndarray
             2D array where each row is a lagged input sequence.
         """
-        if window_type == "sliding":
+        if self.window_type == "sliding":
             return np.array([
                 series.iloc[i - self.n_lags:i].values
                 for i in range(self.n_lags, len(series))
             ])
         
-        elif window_type == "block":
+        elif self.window_type == "block":
             num_blocks = len(series) // self.n_lags
             return np.array([
                 series.iloc[i * self.n_lags : (i + 1) * self.n_lags].values
@@ -160,19 +163,19 @@ class AutoencoderAnomalyDetector:
         
         return self.model.decision_function(input_matrix)
 
-    def plot_score_distribution(self):
+    def plot_score_distribution(self, title_id):
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
         plt.figure(figsize=(10, 4))
         plt.hist(self.anomaly_scores, bins=20, edgecolor='black')
-        plt.title("Histogram of Anomaly Scores")
+        plt.title(f"Histogram of Anomaly Scores at {title_id}")
         plt.xlabel("Anomaly Score")
         plt.ylabel("Frequency")
         plt.grid(True)
         plt.tight_layout()
         plt.show()
 
-    def plot_series_with_anomalies(self):
+    def plot_series_with_anomalies(self,title_id):
         
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
@@ -188,7 +191,7 @@ class AutoencoderAnomalyDetector:
         )
         plt.xlabel("Time")
         plt.ylabel("Value / Anomaly Score")
-        plt.title("Time Series and Anomaly Scores")
+        plt.title(f"Time Series and Anomaly Scores at {title_id}")
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
@@ -215,7 +218,6 @@ class AutoencoderAnomalyDetector:
     
         base_df["anomaly_score"] = self.anomaly_scores
         base_df["is_outlier"] = is_outlier
-
     
         anomaly_df = base_df[base_df["is_outlier"]][["sn", self.time_col, self.feature, "is_outlier"]]
     
