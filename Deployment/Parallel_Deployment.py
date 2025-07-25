@@ -353,33 +353,17 @@ if __name__ == "__main__":
                 results.append(future.result())
         return results
 
-    # Main experiment loop
-    worker_list = [200, 150, 100, 64, 32, 16, 8, 4, 1]
-    timing_results = []
+    workers = 30
+    print(f"\nRunning with {workers} workers...")
+    start = time.time()
+    result = detect_anomalies_parallel(df_snr, n_workers=workers)
+    duration = time.time() - start
+    df_result = pd.DataFrame(result)
 
-    for workers in worker_list:
-        print(f"\nRunning with {workers} workers...")
-        start = time.time()
-        result = detect_anomalies_parallel(df_snr, n_workers=workers)
-        duration = time.time() - start
-        df_result = pd.DataFrame(result)
+    # Print the DataFrame for this worker setting (optional)
+    print(df_result)
 
-        # Print the DataFrame for this worker setting (optional)
-        print(df_result)
-
-        # Save to HDFS using Spark
-        df_result_spark = spark.createDataFrame(df_result)
-        output_path = f"/user/ZheS//owl_anomally//anomally_result/kde_{workers}"
-        df_result_spark.write.mode("overwrite").parquet(output_path)
-
-        timing_results.append({
-            "workers": workers,
-            "duration_sec": duration,
-            "num_serial_numbers": len(result)
-        })
-        print(f"Completed in {duration:.2f} seconds with {len(result)} serial numbers.")
-
-    # Print timing summary table
-    print("\n=== Summary of All Runs ===")
-    timing_df = pd.DataFrame(timing_results)
-    print(timing_df)
+    # Save to HDFS using Spark
+    df_result_spark = spark.createDataFrame(df_result)
+    output_path = f"/user/ZheS//owl_anomally//anomally_result/kde_{workers}"
+    df_result_spark.write.mode("overwrite").parquet(output_path)
