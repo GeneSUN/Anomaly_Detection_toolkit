@@ -21,7 +21,7 @@ class FeaturewiseKDENoveltyDetector:
                  train_idx="all", 
                  new_idx="all", 
                  filter_percentile=100, 
-                 threshold_percentile=100,
+                 threshold_percentile=99,
                  anomaly_direction="low"):
         """
         Parameters:
