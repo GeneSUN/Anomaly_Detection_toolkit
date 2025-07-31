@@ -70,22 +70,64 @@ class KMeansOutlierDetector:
         if len(self.features) != 2:
             raise ValueError("plot() only supports 2D feature space. Use plot_pca() for more than 2.")
 
-        X = self.df_clean[self.features].values
         distances = self.df_clean["outlier_score"].values
+        is_outlier = self.df_clean["is_outlier"].values
+
+        # Get scaled feature matrix
+        X_scaled = self.df_clean[self.features].values
+
+        # Inverse transform to get original feature values
+        if self.scale:
+            X = self.scaler.inverse_transform(X_scaled)
+            centers = self.scaler.inverse_transform(self.centers)
+        else:
+            X = X_scaled
+            centers = self.centers
+
+        # Shared color scale
+        vmin = distances.min()
+        vmax = distances.max()
 
         fig, ax = plt.subplots(figsize=(8, 6))
-        sc = ax.scatter(X[:, 0], X[:, 1], c=distances, cmap='coolwarm', edgecolor='k')
-        ax.scatter(
-            X[self.df_clean["is_outlier"]][:, 0],
-            X[self.df_clean["is_outlier"]][:, 1],
-            c='red', edgecolor='k', label='Outliers'
+
+        # Inliers (no outline)
+        inlier_plot = ax.scatter(
+            X[~is_outlier][:, 0], X[~is_outlier][:, 1],
+            c=distances[~is_outlier],
+            cmap='coolwarm',
+            s=50,
+            edgecolors='none',
+            vmin=vmin,
+            vmax=vmax,
+            label='Inliers'
         )
-        ax.scatter(self.centers[:, 0], self.centers[:, 1], c='black', marker='x', s=100, label='Centers')
-        ax.set_title("KMeans Outlier Detection (2D)")
+
+        # Outliers (black outline)
+        ax.scatter(
+            X[is_outlier][:, 0], X[is_outlier][:, 1],
+            c=distances[is_outlier],
+            cmap='coolwarm',
+            s=50,
+            edgecolors='black',
+            linewidths=1,
+            vmin=vmin,
+            vmax=vmax,
+            label='Outliers'
+        )
+
+        # Cluster centers
+        ax.scatter(
+            centers[:, 0], centers[:, 1],
+            c='black', marker='x', s=100, label='Centers'
+        )
+
+        ax.set_title("KMeans Outlier Detection (2D, Original Scale)")
         ax.set_xlabel(self.features[0])
         ax.set_ylabel(self.features[1])
-        cb = plt.colorbar(sc, ax=ax)
-        cb.set_label("Outlier Score")
+
+        cb = plt.colorbar(inlier_plot, ax=ax)
+        cb.set_label("Outlier Score (Distance to Center)")
+
         ax.legend()
         plt.tight_layout()
         plt.show()
