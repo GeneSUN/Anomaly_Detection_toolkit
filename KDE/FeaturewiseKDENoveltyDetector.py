@@ -62,9 +62,25 @@ class FeaturewiseKDENoveltyDetector:
         self.outlier_mask = None
 
     def _filter_train_df(self, train_df):
+        """
+        Filters training data by removing extreme values from both directions
+        based on filter_percentile.
+        
+        If filter_percentile < 100:
+            - Keeps the central filter_percentile% of the data.
+            - Example: 95 keeps 2.5% on each tail removed.
+        """
         if self.filter_percentile < 100:
-            upper = np.percentile(train_df[self.feature_col], self.filter_percentile)
-            train_df = train_df[train_df[self.feature_col] <= upper]
+            lower_p = (100 - self.filter_percentile) / 2
+            upper_p = 100 - lower_p
+            
+            lower = np.percentile(train_df[self.feature_col], lower_p)
+            upper = np.percentile(train_df[self.feature_col], upper_p)
+            
+            train_df = train_df[
+                (train_df[self.feature_col] >= lower) & 
+                (train_df[self.feature_col] <= upper)
+            ]
         return train_df
 
     def fit(self):
