@@ -21,6 +21,7 @@ class EWMAAnomalyDetector:
         n_shift (int): Shift to prevent leakage.
         anomaly_direction (str): One of {'both', 'high', 'low'}.
         scaler (str or object): Optional scaler: 'standard', 'minmax', or custom scaler with fit_transform and inverse_transform.
+        min_std_ratio (float): Minimum rolling std as a ratio of |feature| to avoid near-zero std (default: 0.01).
     """
 
     def __init__(
@@ -33,7 +34,8 @@ class EWMAAnomalyDetector:
         no_of_stds=2.0,
         n_shift=1,
         anomaly_direction="low",
-        scaler=None
+        scaler=None,
+        min_std_ratio=0.01
     ):
         assert anomaly_direction in {"both", "high", "low"}
         assert scaler in {None, "standard", "minmax"} or hasattr(scaler, "fit_transform")
@@ -50,6 +52,7 @@ class EWMAAnomalyDetector:
         self.df_ = None
         self.scaler_type = scaler
         self._scaler = None
+        self.min_std_ratio = min_std_ratio
 
     def _apply_scaler(self, df):
         df = df.copy()
@@ -71,12 +74,21 @@ class EWMAAnomalyDetector:
         return self._scaler.inverse_transform(series.values.reshape(-1, 1)).flatten()
 
     def _add_ewma(self):
+        
         df = self._apply_scaler(self.df_original)
+
         target = df['feature_scaled'].shift(self.n_shift)
+        
         df['EMA'] = target.ewm(span=self.window, adjust=False).mean()
         df['rolling_std'] = target.rolling(window=self.window).std()
+        
+        # Impose a lower bound on std to avoid degenerate control limits
+        min_std = self.min_std_ratio * df['feature_scaled'].abs()
+        df['rolling_std'] = df['rolling_std'].where(df['rolling_std'] >= min_std, min_std)
+
         df['UCL'] = df['EMA'] + self.no_of_stds * df['rolling_std']
         df['LCL'] = df['EMA'] - self.no_of_stds * df['rolling_std']
+        
         return df
 
     def _detect_anomalies(self, df):
