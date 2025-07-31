@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 class KMeansOutlierDetector:
     def __init__(self, df, features, n_clusters=2, scale=True,
                  filter_percentile=None, threshold_percentile=95,
-                 time_col="time", random_state=42):
+                 time_col="time",  distance_metric="euclidean", random_state=42):
         """
         Parameters
         ----------
@@ -24,6 +24,8 @@ class KMeansOutlierDetector:
         self.time_col = time_col
         self.n_clusters = n_clusters
         self.scale = scale
+        self.distance_metric = distance_metric
+        self.cov_inv = None  # Needed for Mahalanobis
         self.random_state = random_state
         self.filter_percentile = filter_percentile
         self.threshold_percentile = threshold_percentile
@@ -49,6 +51,29 @@ class KMeansOutlierDetector:
             df[self.features] = X
 
         return df.reset_index(drop=True)
+    
+    def _compute_distance(self, X, centers, labels):
+        if self.distance_metric == "euclidean":
+            return np.linalg.norm(X - centers[labels], axis=1)
+
+        elif self.distance_metric == "manhattan":
+            return np.sum(np.abs(X - centers[labels]), axis=1)
+
+        elif self.distance_metric == "mahalanobis":
+            if self.cov_inv is None:
+                cov = np.cov(X.T)
+                self.cov_inv = np.linalg.pinv(cov)
+
+            # Mahalanobis distance: d(x, μ) = sqrt((x - μ)^T Σ⁻¹ (x - μ))
+            distances = []
+            for x, center in zip(X, centers[labels]):
+                diff = x - center
+                dist = np.sqrt(np.dot(np.dot(diff.T, self.cov_inv), diff))
+                distances.append(dist)
+            return np.array(distances)
+
+        else:
+            raise ValueError(f"Unsupported distance metric: {self.distance_metric}")
 
     def fit(self):
         X = self.df_clean[self.features].values
@@ -56,7 +81,8 @@ class KMeansOutlierDetector:
         self.df_clean["cluster"] = self.kmeans.labels_
         self.centers = self.kmeans.cluster_centers_
 
-        distances = np.linalg.norm(X - self.centers[self.df_clean["cluster"]], axis=1)
+        #distances = np.linalg.norm(X - self.centers[self.df_clean["cluster"]], axis=1)
+        distances = self._compute_distance(X, self.centers, self.df_clean["cluster"].values)
         self.df_clean["outlier_score"] = distances
         threshold = np.percentile(distances, self.threshold_percentile)
         self.df_clean["is_outlier"] = distances >= threshold
