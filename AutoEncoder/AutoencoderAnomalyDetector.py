@@ -175,26 +175,34 @@ class AutoencoderAnomalyDetector:
         plt.tight_layout()
         plt.show()
 
-    def plot_series_with_anomalies(self,title_id):
-        
+    def plot_series_with_anomalies(self, title_id):
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
         
-        plt.figure(figsize=(16, 6))
-        plt.plot(self.df['ds'], self.df['y'], label="Original Time Series", color="blue")
-        plt.plot(
+        fig, ax1 = plt.subplots(figsize=(16, 6))
+
+        # Plot the original time series on the left y-axis
+        ax1.plot(self.df['ds'], self.df['y'], label="Original Time Series", color="blue")
+        ax1.set_xlabel("Time")
+        ax1.set_ylabel("Original Value", color="blue")
+        ax1.tick_params(axis='y', labelcolor="blue")
+
+        # Create a second y-axis for the anomaly score
+        ax2 = ax1.twinx()
+        ax2.plot(
             self.df['ds'][self.n_lags:].values,
             self.anomaly_scores,
             color="orange",
             label="Anomaly Score",
             linewidth=2
         )
-        plt.xlabel("Time")
-        plt.ylabel("Value / Anomaly Score")
+        ax2.set_ylabel("Anomaly Score", color="orange")
+        ax2.tick_params(axis='y', labelcolor="orange")
+
+        # Title and grid
         plt.title(f"Time Series and Anomaly Scores at {title_id}")
-        plt.legend()
+        fig.tight_layout()
         plt.grid(True)
-        plt.tight_layout()
         plt.show()
 
     def get_anomaly_stats(self):
