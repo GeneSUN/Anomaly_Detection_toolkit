@@ -181,23 +181,33 @@ class AutoencoderAnomalyDetector:
         
         fig, ax1 = plt.subplots(figsize=(16, 6))
 
-        # Plot the original time series on the left y-axis
-        ax1.plot(self.df['ds'], self.df['y'], label="Original Time Series", color="blue")
+        # Plot the original time series on the left y-axis (blue)
+        line1, = ax1.plot(
+            self.df['ds'], 
+            self.df['y'], 
+            color="blue", 
+            label="Original Time Series (blue)"
+        )
         ax1.set_xlabel("Time")
         ax1.set_ylabel("Original Value", color="blue")
         ax1.tick_params(axis='y', labelcolor="blue")
 
-        # Create a second y-axis for the anomaly score
+        # Plot the anomaly scores on the right y-axis (orange)
         ax2 = ax1.twinx()
-        ax2.plot(
+        line2, = ax2.plot(
             self.df['ds'][self.n_lags:].values,
             self.anomaly_scores,
             color="orange",
-            label="Anomaly Score",
-            linewidth=2
+            linewidth=2,
+            label="Anomaly Score (orange)"
         )
         ax2.set_ylabel("Anomaly Score", color="orange")
         ax2.tick_params(axis='y', labelcolor="orange")
+
+        # Add legends for both lines
+        lines = [line1, line2]
+        labels = [line.get_label() for line in lines]
+        ax1.legend(lines, labels, loc='upper left')
 
         # Title and grid
         plt.title(f"Time Series and Anomaly Scores at {title_id}")
