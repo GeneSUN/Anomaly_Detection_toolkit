@@ -29,7 +29,7 @@ class EWMAAnomalyDetector:
         df,
         feature,
         timestamp_col="time",
-        recent_window_size=600,
+        recent_window_size="all",
         window=10,
         no_of_stds=2.0,
         n_shift=1,
