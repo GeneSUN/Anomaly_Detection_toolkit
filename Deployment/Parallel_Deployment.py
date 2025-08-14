@@ -7,24 +7,19 @@ from datetime import datetime, timedelta, date
 from pyspark.sql.window import Window
 from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode
 from pyspark.sql.types import *
-from pyspark.sql.types import FloatType
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-import sys 
-import traceback
-from pyspark.sql.functions import from_unixtime 
-import argparse 
 
 from functools import reduce
 from pyspark.sql import DataFrame
 
-sys.path.append('/usr/apps/vmas/scripts/ZS') 
-from MailSender import MailSender
+
 from statsforecast import StatsForecast
 from statsforecast.models import AutoARIMA
 import pandas as pd
 import matplotlib.pyplot as plt
-# http://njbbvmaspd13:18080/next/#/notebook/2KW1NYKEF
+
 class ARIMAAnomalyDetector:
     """
     Anomaly detection for univariate time series using Nixtla's AutoARIMA with prediction intervals.
@@ -295,19 +290,16 @@ class FeaturewiseKDENoveltyDetector:
 
 
 if __name__ == "__main__":
-    email_sender = MailSender()
+
     spark = SparkSession.builder\
             .appName('KDENoveltyDetector')\
             .config("spark.ui.port","24041")\
             .getOrCreate()
     spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
 
-    import time
-    start_time = time.time()  # ⏱ Start timing
-
     hdfs_pd = "hdfs://njbbvmaspd11.nss.vzwnet.com:9000/"
     hdfs_pa =  'hdfs://njbbepapa1.nss.vzwnet.com:9000'
-    import random
+
 
     snr_data_path = "/user/ZheS//owl_anomally/capacity_records/"
     feature_col = "avg_5gsnr"
@@ -353,33 +345,10 @@ if __name__ == "__main__":
                 results.append(future.result())
         return results
 
-    # Main experiment loop
-    worker_list = [200, 150, 100, 64, 32, 16, 8, 4, 1]
-    timing_results = []
+    workers = 30
+    result = detect_anomalies_parallel(df_snr, n_workers=workers)
+    df_result = pd.DataFrame(result)
 
-    for workers in worker_list:
-        print(f"\nRunning with {workers} workers...")
-        start = time.time()
-        result = detect_anomalies_parallel(df_snr, n_workers=workers)
-        duration = time.time() - start
-        df_result = pd.DataFrame(result)
-
-        # Print the DataFrame for this worker setting (optional)
-        print(df_result)
-
-        # Save to HDFS using Spark
-        df_result_spark = spark.createDataFrame(df_result)
-        output_path = f"/user/ZheS//owl_anomally//anomally_result/kde_{workers}"
-        df_result_spark.write.mode("overwrite").parquet(output_path)
-
-        timing_results.append({
-            "workers": workers,
-            "duration_sec": duration,
-            "num_serial_numbers": len(result)
-        })
-        print(f"Completed in {duration:.2f} seconds with {len(result)} serial numbers.")
-
-    # Print timing summary table
-    print("\n=== Summary of All Runs ===")
-    timing_df = pd.DataFrame(timing_results)
-    print(timing_df)
+    df_result_spark = spark.createDataFrame(df_result)
+    output_path = f"/user/ZheS//owl_anomally//anomally_result/kde_{workers}"
+    df_result_spark.write.mode("overwrite").parquet(output_path)

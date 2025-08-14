@@ -155,7 +155,7 @@ class DBSCANOutlierDetector:
                         c='gray', label='Train Outliers', alpha=0.3)
     
         plt.scatter(X_test_plot[~self.outlier_mask, 0], X_test_plot[~self.outlier_mask, 1],
-                    c='green', label='Test Inliers')
+                    c='orange', label='Test Inliers')
         plt.scatter(X_test_plot[self.outlier_mask, 0], X_test_plot[self.outlier_mask, 1],
                     c='red', label='Test Outliers')
     
