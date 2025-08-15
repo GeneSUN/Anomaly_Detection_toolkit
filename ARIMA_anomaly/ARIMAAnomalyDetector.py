@@ -26,7 +26,7 @@ class ARIMAAnomalyDetector:
     """
 
     def __init__(self, df, time_col, feature, season_length=24, confidence_level=99,
-                 freq='h', anomaly_direction='both'):
+                 freq='h', anomaly_direction='lower'):
         self.df = df
         self.time_col = time_col
         self.feature = feature
@@ -118,11 +118,14 @@ class ARIMAAnomalyDetector:
         plt.xlabel("Time")
         plt.ylabel(self.feature)
         plt.show()
+
     def get_recent_anomaly_stats(self, num_recent_points=24):
         if self.insample_forecast is None or 'anomaly' not in self.insample_forecast.columns:
             raise ValueError("Anomaly detection has not been run yet. Please call run() first.")
+
         recent_data = self.insample_forecast[-num_recent_points:].copy()
         outliers = recent_data[recent_data['anomaly']]
+
         return {
             "outlier_count": outliers.shape[0],
             "total_new_points": num_recent_points,
