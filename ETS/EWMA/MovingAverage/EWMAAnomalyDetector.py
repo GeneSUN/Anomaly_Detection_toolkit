@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import sys
 from pyspark.sql.functions import sum, lag, col, split, concat_ws, lit ,udf,count, max,lit,avg, when,concat_ws,to_date,explode,last
 
+
 class EWMAAnomalyDetector:
     """
     EWMA-based anomaly detector with optional scaling and flexible recent window evaluation.
@@ -30,12 +31,13 @@ class EWMAAnomalyDetector:
         feature,
         timestamp_col="time",
         recent_window_size="all",
-        window=10,
-        no_of_stds=2.0,
+        window=100,
+        no_of_stds=3.0,
         n_shift=1,
         anomaly_direction="low",
         scaler=None,
-        min_std_ratio=0.01
+        min_std_ratio=0.01,
+        use_weighted_std=False
     ):
         assert anomaly_direction in {"both", "high", "low"}
         assert scaler in {None, "standard", "minmax"} or hasattr(scaler, "fit_transform")
@@ -53,6 +55,7 @@ class EWMAAnomalyDetector:
         self.scaler_type = scaler
         self._scaler = None
         self.min_std_ratio = min_std_ratio
+        self.use_weighted_std = use_weighted_std
 
     def _apply_scaler(self, df):
         df = df.copy()
@@ -73,6 +76,43 @@ class EWMAAnomalyDetector:
             return series
         return self._scaler.inverse_transform(series.values.reshape(-1, 1)).flatten()
 
+    def _weighted_std_ewm(self, series, span):
+        """
+        Calculate exponentially weighted standard deviation.
+
+        Formula:
+            σ_w = sqrt( Σ wᵢ (xᵢ - μ_w)² / Σ wᵢ )
+
+        Where:
+            - xᵢ: input values in the rolling window
+            - wᵢ: exponential weights (more recent points have higher weight)
+            - μ_w: weighted mean = Σ wᵢ xᵢ / Σ wᵢ
+
+        Parameters:
+            series (pd.Series): Input series to compute weighted std on
+            span (int): EWMA span (same as for EMA)
+
+        Returns:
+            pd.Series: weighted std aligned with EMA
+        """
+        import numpy as np
+        alpha = 2 / (span + 1)
+        weights = np.array([(1 - alpha) ** i for i in reversed(range(span))])
+        weights /= weights.sum()
+
+        x = series.values
+        stds = []
+        for i in range(len(x)):
+            if i < span:
+                stds.append(np.nan)
+            else:
+                window = x[i - span + 1:i + 1]
+                mu_w = np.sum(weights * window)
+                var_w = np.sum(weights * (window - mu_w) ** 2)
+                stds.append(np.sqrt(var_w))
+        return pd.Series(stds, index=series.index)
+
+
     def _add_ewma(self):
         
         df = self._apply_scaler(self.df_original)
@@ -80,7 +120,10 @@ class EWMAAnomalyDetector:
         target = df['feature_scaled'].shift(self.n_shift)
         
         df['EMA'] = target.ewm(span=self.window, adjust=False).mean()
-        df['rolling_std'] = target.rolling(window=self.window).std()
+        if self.use_weighted_std:
+            df['rolling_std'] = self._weighted_std_ewm(target, span=self.window)
+        else:
+            df['rolling_std'] = target.rolling(window=self.window).std()
         
         # Impose a lower bound on std to avoid degenerate control limits
         min_std = self.min_std_ratio * df['feature_scaled'].abs()
@@ -114,19 +157,27 @@ class EWMAAnomalyDetector:
         return recent_df[recent_df["is_outlier"]][["sn", self.timestamp_col, self.feature, "is_outlier"]]
 
 
-    def plot(self, timestamp_col= None, figsize=(12, 6)):
+    def plot(self, timestamp_col=None, figsize=(12, 6), title=None, start_time=None, end_time=None):
         if timestamp_col is None:
             timestamp_col = self.timestamp_col
         if self.df_ is None:
             raise ValueError("Run `.fit()` before plotting.")
+
+        # Filter the DataFrame based on the specified time range
         df = self.df_
+        if start_time and end_time:
+            df = df[(df[timestamp_col] >= start_time) & (df[timestamp_col] <= end_time)]
+        elif start_time:
+            df = df[df[timestamp_col] >= start_time]
+        elif end_time:
+            df = df[df[timestamp_col] <= end_time]
 
         plt.figure(figsize=figsize)
         plt.plot(df[timestamp_col], df[self.feature], label='Original', color='blue', alpha=0.6)
 
-        ema = self._inverse_scaler(df['EMA'] )
-        ucl = self._inverse_scaler(df['UCL'] )
-        lcl = self._inverse_scaler(df['LCL'] )
+        ema = self._inverse_scaler(df['EMA'])
+        ucl = self._inverse_scaler(df['UCL'])
+        lcl = self._inverse_scaler(df['LCL'])
 
         plt.plot(df[timestamp_col], ema, label='EWMA', color='orange')
         plt.plot(df[timestamp_col], ucl, label='UCL', color='green', linestyle='--')
@@ -135,13 +186,86 @@ class EWMAAnomalyDetector:
         anomalies = df[df['is_outlier']]
         plt.scatter(anomalies[timestamp_col], anomalies[self.feature], color='red', label='Anomalies', zorder=5)
 
-        plt.title(f"EWMA Anomaly Detection ({self.anomaly_direction}) {self.feature}")
+        plt.title(f"EWMA Anomaly Detection ({self.anomaly_direction}) {self.feature} {title}")
         plt.xlabel('Time')
         plt.ylabel(self.feature)
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+def convert_string_numerical(df, String_typeCols_List):
+    from pyspark.sql.functions import col
+    return df.select([col(c).cast('double') if c in String_typeCols_List else col(c) for c in df.columns])
+
+class HourlyIncrementProcessor:
+    def __init__(self, df, columns):
+        self.df = df
+        self.columns = columns
+        self.acc_columns = [f"{col}" for col in self.columns]
+        self.incr_columns = [f"{col}_incr" for col in self.acc_columns]
+        self.log_columns = [f"log_{col}" for col in self.incr_columns]
+
+        self.df_hourly = None
+
+
+    def compute_hourly_average(self):
+        agg_exprs = [F.round(F.avg(c), 2).alias(f"{c}") for c in self.columns]
+        self.df_hourly = self.df.groupBy("sn", "time").agg(*agg_exprs)
+
+    def compute_increments(self, partition_col="sn", order_col="time"):
+        window_spec = Window.partitionBy(partition_col).orderBy(order_col)
+        for col_name in self.acc_columns:
+            prev = lag(col(col_name), 1).over(window_spec)
+            raw_incr = col(col_name) - prev
+            prev_incr = lag(raw_incr, 1).over(window_spec)
+
+            incr = when(col(col_name) < prev,
+                        when(prev_incr.isNotNull(), prev_incr).otherwise(lit(0)))\
+                   .otherwise(raw_incr)
+
+            self.df_hourly = self.df_hourly.withColumn(f"{col_name}_incr", incr)
+
+        for col_name in self.incr_columns:
+            prev = lag(col(col_name), 1).over(window_spec)
+            smoothed = when(col(col_name) < 0, prev).otherwise(col(col_name))
+            self.df_hourly = self.df_hourly.withColumn(col_name, F.round(smoothed, 2))
+
+    def apply_log_transform(self):
+        for incr_col in self.incr_columns:
+            self.df_hourly = self.df_hourly.withColumn(
+                f"log_{incr_col}",
+                F.round(F.log1p(F.when(F.col(incr_col) < 0, 0).otherwise(F.col(incr_col))), 2)
+            )
+
+    def fill_zero_with_previous(self, partition_col="sn", order_col="time"):
+        window_spec = Window.partitionBy(partition_col).orderBy(order_col)\
+            .rowsBetween(Window.unboundedPreceding, 0)
+
+        for c in self.incr_columns:
+            log_col = f"log_{c}"
+            filled_col = f"{log_col}_nonzero_filled"
+            self.df_hourly = self.df_hourly.withColumn(
+                filled_col, when(col(log_col) != 0, col(log_col)).otherwise(None)
+            )
+            self.df_hourly = self.df_hourly.withColumn(
+                log_col,
+                last(filled_col, ignorenulls=True).over(window_spec)
+            ).drop(filled_col)
+
+    def run_all(self):
+        self.compute_hourly_average()
+        self.compute_increments()
+        self.apply_log_transform()
+        self.fill_zero_with_previous()
+
+    def get_selected_pandas_df(self):
+        return self.df_hourly.select(
+            "time",
+            "sn", 
+            *self.acc_columns,
+            *self.incr_columns,
+            *self.log_columns
+        ).na.drop().toPandas()
 
 
 # ------------------------------
