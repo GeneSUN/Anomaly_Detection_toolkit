@@ -23,48 +23,57 @@ class AutoencoderAnomalyDetector:
                  df: pd.DataFrame, 
                  time_col: str, 
                  feature: str, 
-                 window_type: str = "sliding",
-                 n_lags: int = 24,
+                 window_size: int = 24,
+                 overlap: float = 0.5,
                  model_params: Optional[dict] = None,
                  model: Optional[object] = None,
                  scaler: Union[str, object, None] = "standard",
-                 threshold_percentile = 99
+                 threshold_percentile: float = 99
                  ):
         """
-        Initialization.
+        Autoencoder-based anomaly detector for univariate time series.
 
         Parameters
         ----------
         df : pd.DataFrame
+            Input dataframe.
         time_col : str
+            Column containing timestamps.
         feature : str
-        n_lags : int
+            Column containing the target feature (numeric).
+        window_size : int
+            Length of each sub-series window.
+        overlap : float
+            Fractional overlap between windows (0=no overlap, 0.5=50% overlap, etc.).
         model_params : dict, optional
+            Parameters for the default autoencoder.
         model : object, optional
-            If provided, this custom model will be used instead of the default autoencoder.
-        scaler : {'standard', 'minmax', object, None}
-            'standard' for StandardScaler, 'minmax' for MinMaxScaler,
-            a custom scaler instance (must implement fit_transform), or None.
+            Custom model (must implement fit + decision_function).
+        scaler : {'standard','minmax',object,None}
+            Scaler type. Can be a string, custom scaler, or None.
+        threshold_percentile : float
+            Percentile cutoff for anomaly threshold.
         """
         self.df_raw = df.copy()
         self.time_col = time_col
         self.feature = feature
-        self.window_type = window_type
-        self.n_lags = n_lags
+        self.window_size = window_size
+        self.overlap = overlap
         self.model_params = model_params
-        self.external_model = None
+        self.external_model = model
         self.scaler_type = scaler
         self.scaler = None
         self.model = None
         self.threshold_percentile = threshold_percentile
-        
+
         self.df = None
         self.input_data = None
         self.input_data_scaled = None
-        
+
         self.anomaly_scores = None
         self.threshold_scores = None
-        
+        self.window_end_idx = None  # alignment indices
+
     def _format_time_series(self):
         df = self.df_raw[[self.time_col, self.feature]].copy()
         df = df.rename(columns={self.time_col: "ds", self.feature: "y"})
@@ -73,38 +82,27 @@ class AutoencoderAnomalyDetector:
 
     def _segment_time_series(self, series: pd.Series) -> np.ndarray:
         """
-        Generate lagged input sequences from a univariate time series.
-    
-        Parameters
-        ----------
-        series : pd.Series
-            Input univariate time series.
-        window_type : str
-            Type of windowing. Options:
-                - 'sliding': overlapping windows (default)
-                - 'block': non-overlapping segments
-    
-        Returns
-        -------
-        np.ndarray
-            2D array where each row is a lagged input sequence.
+        Split series into overlapping windows.
         """
-        if self.window_type == "sliding":
-            return np.array([
-                series.iloc[i - self.n_lags:i].values
-                for i in range(self.n_lags, len(series))
-            ])
-        
-        elif self.window_type == "block":
-            num_blocks = len(series) // self.n_lags
-            return np.array([
-                series.iloc[i * self.n_lags : (i + 1) * self.n_lags].values
-                for i in range(num_blocks)
-            ])
-    
-        else:
-            raise ValueError("Invalid window_type. Choose 'sliding' or 'block'.")
+        n = len(series)
+        w = self.window_size
+        if n < w:
+            self.window_end_idx = []
+            return np.empty((0, w))
 
+        if not (0 <= self.overlap < 1):
+            raise ValueError("overlap must be between 0 and 1 (non-inclusive of 1).")
+
+        step = max(1, int(np.round(w * (1 - self.overlap))))
+        windows, end_idx = [], []
+
+        for start in range(0, n - w + 1, step):
+            end = start + w
+            windows.append(series.iloc[start:end].values)
+            end_idx.append(end - 1)
+
+        self.window_end_idx = end_idx
+        return np.asarray(windows)
 
     def _apply_scaler(self, X: np.ndarray) -> np.ndarray:
         if self.scaler_type is None:
@@ -121,16 +119,17 @@ class AutoencoderAnomalyDetector:
     def prepare(self):
         self.df = self._format_time_series()
         self.input_data = self._segment_time_series(self.df["y"])
+        if self.input_data.size == 0:
+            raise ValueError(f"Not enough data for one window of size {self.window_size}.")
         self.input_data_scaled = self._apply_scaler(self.input_data)
 
     def _init_model(self):
         if self.external_model is not None:
             return self.external_model
-
         default_params = {
-            "hidden_neurons": [self.n_lags, 4, 4, self.n_lags],
+            "hidden_neurons": [self.window_size, 4, 4, self.window_size],
             "hidden_activation": "relu",
-            "epochs": 20,
+            "epochs": 10,
             "batch_norm": True,
             "learning_rate": 0.001,
             "batch_size": 32,
@@ -145,23 +144,34 @@ class AutoencoderAnomalyDetector:
             raise ValueError("Call prepare() before fit().")
         if threshold_percentile is None:
             threshold_percentile = self.threshold_percentile
-        
+
         self.model = self._init_model()
         self.model.fit(self.input_data_scaled)
-        
+
         self.anomaly_scores = self.model.decision_scores_
         self.threshold_scores = np.percentile(self.anomaly_scores, threshold_percentile)
-        
+
     def predict(self, input_series: pd.Series) -> np.ndarray:
         if self.model is None:
             raise ValueError("Call fit() before predict().")
-            
-        input_matrix = self._segment_time_series(input_series)
-        
+
+        n = len(input_series)
+        w = self.window_size
+        step = max(1, int(round(w * (1 - self.overlap))))
+
+        windows = []
+        for start in range(0, n - w + 1, step):
+            end = start + w
+            windows.append(input_series.iloc[start:end].values)
+        X = np.asarray(windows)
+
+        if X.size == 0:
+            return np.array([])
+
         if self.scaler:
-            input_matrix = self.scaler.transform(input_matrix)
-        
-        return self.model.decision_function(input_matrix)
+            X = self.scaler.transform(X)
+
+        return self.model.decision_function(X)
 
     def plot_score_distribution(self, title_id):
         if self.anomaly_scores is None:
@@ -178,156 +188,41 @@ class AutoencoderAnomalyDetector:
     def plot_series_with_anomalies(self, title_id):
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
-        
-        fig, ax1 = plt.subplots(figsize=(16, 6))
+        if not self.window_end_idx:
+            raise ValueError("Window indices missing. Did you call prepare()?")
 
-        # Plot the original time series on the left y-axis (blue)
-        line1, = ax1.plot(
-            self.df['ds'], 
-            self.df['y'], 
-            color="blue", 
-            label="Original Time Series (blue)"
-        )
+        fig, ax1 = plt.subplots(figsize=(12, 6))
+
+        # Plot raw series
+        ax1.plot(self.df['ds'], self.df['y'], label="Original Time Series", color="blue")
         ax1.set_xlabel("Time")
         ax1.set_ylabel("Original Value", color="blue")
         ax1.tick_params(axis='y', labelcolor="blue")
 
-        # Plot the anomaly scores on the right y-axis (orange)
+        # Plot anomaly scores at window end positions
+        x_scores = self.df['ds'].iloc[self.window_end_idx].values
         ax2 = ax1.twinx()
-        line2, = ax2.plot(
-            self.df['ds'][self.n_lags:].values,
-            self.anomaly_scores,
-            color="orange",
-            linewidth=2,
-            label="Anomaly Score (orange)"
-        )
+        ax2.plot(x_scores, self.anomaly_scores, color="orange", label="Anomaly Score", linewidth=2)
         ax2.set_ylabel("Anomaly Score", color="orange")
         ax2.tick_params(axis='y', labelcolor="orange")
 
-        # Add legends for both lines
-        lines = [line1, line2]
-        labels = [line.get_label() for line in lines]
-        ax1.legend(lines, labels, loc='upper left')
-
-        # Title and grid
         plt.title(f"Time Series and Anomaly Scores at {title_id}")
         fig.tight_layout()
         plt.grid(True)
         plt.show()
 
     def get_anomaly_stats(self):
-        """
-        Return anomaly records and scores.
-        """
-        
         if self.anomaly_scores is None:
             raise ValueError("Model not trained. Call fit() first.")
-    
-    
+        if not self.window_end_idx:
+            raise ValueError("Window indices missing. Did you call prepare()?")
+
         is_outlier = self.anomaly_scores > self.threshold_scores
-    
-        # Create mask for valid rows depending on windowing type
-        if self.window_type == "sliding":
-            base_df = self.df_raw.iloc[self.n_lags:].copy()
-        else:  # "block"
-            total_windows = len(self.anomaly_scores)
-            base_df = self.df_raw.iloc[:total_windows * self.n_lags].copy()
-            base_df = base_df.groupby(np.arange(len(base_df)) // self.n_lags).last().reset_index(drop=True)
-    
+        base_df = self.df_raw.iloc[self.window_end_idx].copy()
         base_df["anomaly_score"] = self.anomaly_scores
         base_df["is_outlier"] = is_outlier
-    
-        anomaly_df = base_df[base_df["is_outlier"]][["sn", self.time_col, self.feature, "is_outlier"]]
-    
-        return anomaly_df
 
+        cols = ["sn", self.time_col, self.feature, "anomaly_score", "is_outlier"]
+        cols = [c for c in cols if c in base_df.columns]
+        return base_df[base_df["is_outlier"]][cols]
 
-if __name__ == "__main__":
-
-    spark = SparkSession.builder\
-            .appName('AutoencoderAnomalyDetector')\
-            .config("spark.ui.port","24041")\
-            .getOrCreate()
-    spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-
-    import time
-    start_time = time.time()  # ⏱ Start timing
-
-
-
-    N_LAGS = 144
-    hdfs_pd = "hdfs://njbbvmaspd11.nss.vzwnet.com:9000/"
-    hdfs_pa =  'hdfs://njbbepapa1.nss.vzwnet.com:9000'
-    import random
-
-    snr_data_path = "/user/ZheS//owl_anomally/capacity_records/"
-    feature_col = "avg_5gsnr"; time_col = "hour"; columns = ["sn", time_col, feature_col]
-
-    df_snr_all = spark.read.parquet(snr_data_path).select(columns)
-    sn_counts = df_snr_all.groupBy("sn").count()
-    sn_valid = sn_counts.filter(F.col("count") >= 100).select("sn")
-    df_snr = df_snr_all.join(sn_valid, on="sn", how="inner").toPandas()
-
-    from concurrent.futures import ProcessPoolExecutor, as_completed
-    import pandas as pd
-
-    def detect_anomaly_group(args):
-        sn_val, group, feature_col, time_col = args
-        group_sorted = group.sort_values(by=time_col).reset_index(drop=True)
-        """
-        detector = FeaturewiseKDENoveltyDetector(
-            df=group_sorted,
-            feature_col=feature_col,
-            time_col=time_col,
-            train_idx=slice(0, 1068),
-            new_idx=slice(-26, None),
-            train_percentile=99
-        )
-        output = detector.fit()
-        """
-
-        detector = AutoencoderAnomalyDetector(df=group_sorted, time_col=time_col, feature=feature_col)
-        detector.fit()
-        output = detector.get_anomaly_stats(num_recent_points = N_LAGS)
-        return {
-            "sn": sn_val,
-            "outlier_count": output["outlier_count"],
-            "total_new_points": output["total_new_points"]
-        }
-
-    def detect_anomalies_parallel(df, feature_col="avg_5gsnr", time_col="hour", n_workers=200):
-        args = [(sn_val, group, feature_col, time_col) for sn_val, group in df.groupby("sn")]
-        results = []
-        with ProcessPoolExecutor(max_workers=n_workers) as executor:
-            futures = [executor.submit(detect_anomaly_group, arg) for arg in args]
-            for future in as_completed(futures):
-                results.append(future.result())
-        return results
-
-    # Main experiment loop
-    worker_list = [200, 150, 100, 64, 32, 16, 8, 4, 1]
-    timing_results = []
-
-    for workers in worker_list:
-        print(f"\nRunning with {workers} workers...")
-        start = time.time()
-        result = detect_anomalies_parallel(df_snr, n_workers=workers)
-        duration = time.time() - start
-        df_result = pd.DataFrame(result)
-
-        # Save to HDFS using Spark
-        df_result_spark = spark.createDataFrame(df_result)
-        output_path = f"/user/ZheS//owl_anomally//anomally_result/arima_{workers}"
-        df_result_spark.write.mode("overwrite").parquet(output_path)
-
-        timing_results.append({
-            "workers": workers,
-            "duration_sec": duration,
-            "num_serial_numbers": len(result)
-        })
-        print(f"Completed in {duration:.2f} seconds with {len(result)} serial numbers.")
-
-    # Print timing summary table
-    print("\n=== Summary of All Runs ===")
-    timing_df = pd.DataFrame(timing_results)
-    print(timing_df)
