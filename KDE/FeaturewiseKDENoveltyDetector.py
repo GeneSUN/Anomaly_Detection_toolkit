@@ -15,6 +15,7 @@ from sklearn.neighbors import KernelDensity
 class FeaturewiseKDENoveltyDetector:
     def __init__(self, 
                  df, 
+                 customer_id = "customer",
                  feature_col="avg_4gsnr", 
                  time_col="hour", 
                  bandwidth=0.5,
@@ -49,6 +50,7 @@ class FeaturewiseKDENoveltyDetector:
         result = detector.fit()
         """
         self.df = df
+        self.customer_id = customer_id
         self.feature_col = feature_col
         self.time_col = time_col
         self.bandwidth = bandwidth
@@ -132,7 +134,7 @@ class FeaturewiseKDENoveltyDetector:
         is_outlier_col.loc[new_indices] = final_outlier_mask
         self.df["is_outlier"] = is_outlier_col
 
-        return self.df[self.df["is_outlier"]][["sn", self.time_col, self.feature_col, "is_outlier"]]
+        return self.df[self.df["is_outlier"]][[self.customer_id , self.time_col, self.feature_col, "is_outlier"]]
 
     def plot_line(self, sn_num=None):
         plt.figure(figsize=(10, 4))
