@@ -69,7 +69,7 @@ class LOFOutlierDetector:
         plt.tight_layout()
         plt.show()
 
-
+"""
 # === Example Usage ===
 # Generate data
 np.random.seed(42)
@@ -86,3 +86,4 @@ custom_model = LocalOutlierFactor(n_neighbors=10, metric='manhattan', contaminat
 lof = LOFOutlierDetector(X_all, model=custom_model)
 lof.fit()
 lof.plot()
+"""
