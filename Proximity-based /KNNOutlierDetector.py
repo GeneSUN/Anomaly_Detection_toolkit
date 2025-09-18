@@ -130,7 +130,7 @@ class KNNOutlierDetector:
         ax.legend()
         plt.tight_layout()
         plt.show()
-
+"""
 # Test example
 np.random.seed(42)
 X_normal = np.random.randn(100, 2) * 0.75 + np.array([2, 2])
@@ -150,3 +150,4 @@ X_5d_all = np.vstack([X_5d_normal, X_5d_outliers])
 knn_detector_highdim = KNNOutlierDetector(X_5d_all, k=5, method='average', threshold_percentile=95)
 knn_detector_highdim.fit()
 knn_detector_highdim.plot()
+"""
