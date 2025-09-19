@@ -36,29 +36,3 @@ class KNNOutlierDetector(BaseOutlierDetector):
         threshold = np.percentile(scores, self.threshold_percentile)
         self.is_outlier = self.df_clean["is_outlier"] = scores >= threshold
         self.fitted = True
-        return self
-
-    def plot(self):
-        if not self.fitted:
-            raise RuntimeError("Model must be fitted before plotting.")
-
-        # Apply PCA only if dimensionality > 2
-        if self.X.shape[1] > 2:
-            X_plot = PCA(n_components=2).fit_transform(self.X)
-        else:
-            X_plot = self.X
-
-        fig, ax = plt.subplots(figsize=(8, 6))
-
-        sc = ax.scatter(X_plot[:, 0], X_plot[:, 1], c=self.scores, cmap='coolwarm', edgecolor='k')
-        ax.scatter(X_plot[self.is_outlier][:, 0], X_plot[self.is_outlier][:, 1],
-                   c='red', edgecolor='k', label='Outliers')
-
-        ax.set_title(f"{self.method.title()} k-NN Outlier Detection")
-        ax.set_xlabel("Component 1" if self.X.shape[1] > 2 else "Feature X")
-        ax.set_ylabel("Component 2" if self.X.shape[1] > 2 else "Feature Y")
-        cb = plt.colorbar(sc, ax=ax)
-        cb.set_label("Outlier Score (Distance-Based)")
-        ax.legend()
-        plt.tight_layout()
-        plt.show()
