@@ -62,23 +62,3 @@ class KNNOutlierDetector(BaseOutlierDetector):
         ax.legend()
         plt.tight_layout()
         plt.show()
-
-# Test example
-np.random.seed(42)
-X_normal = np.random.randn(100, 2) * 0.75 + np.array([2, 2])
-X_outliers = np.random.uniform(low=-2, high=6, size=(5, 2))
-X_all = np.vstack([X_normal, X_outliers])
-
-knn_detector = KNNOutlierDetector(X_all, k=5, method='harmonic', filter_percentile=1, threshold_percentile=95)
-knn_detector.fit()
-knn_detector.plot()
-
-# Test with 5D data
-np.random.seed(42)
-X_5d_normal = np.random.randn(100, 5) * 0.5 + 1
-X_5d_outliers = np.random.uniform(low=-3, high=5, size=(5, 5))
-X_5d_all = np.vstack([X_5d_normal, X_5d_outliers])
-
-knn_detector_highdim = KNNOutlierDetector(X_5d_all, k=5, method='average', threshold_percentile=95)
-knn_detector_highdim.fit()
-knn_detector_highdim.plot()
