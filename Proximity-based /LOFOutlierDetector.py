@@ -4,85 +4,24 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from BaseOutlierDetector import BaseOutlierDetector
 
-class LOFOutlierDetector:
-    """
-    LOFOutlierDetector uses the Local Outlier Factor (LOF) algorithm to identify anomalies in a dataset.
+# ==============================================================
+# LOF Detector
+# ==============================================================
 
-    Parameters
-    ----------
-    X : array-like or DataFrame
-        Input dataset with shape (n_samples, n_features). Can be a NumPy array or a pandas DataFrame.
-
-    contamination : float, default=0.1
-        The proportion of outliers in the data set, marks the top contamination * n_samples as outliers.
-        For contamination='auto', it sets offset_ = -1.5 (if using the legacy version) or uses the algorithm from the reference paper 
-        This fixed offset corresponds roughly to LOF ≈ 1.5, meaning points with a score significantly above 1 (i.e., 50% higher than neighbors) are flagged as outliers 
-        
-    scale : bool, default=True
-        Whether to apply standard scaling to the data during preprocessing.
-
-    model : LocalOutlierFactor object, optional
-        A fully specified LocalOutlierFactor model. If provided, this model will override the default configuration.
-        Useful when you want to control all underlying LOF parameters.
-    """
-    def __init__(self, X, contamination=0.05, scale=True, model=None):
-        self.X_raw = X.values if isinstance(X, pd.DataFrame) else X
-        self.contamination = contamination # 
-        self.scale = scale
-        self.model = model  # optionally passed by user
-        self.is_outlier = None
-        self.scores = None
-
-    def preprocess(self):
-        if self.scale:
-            scaler = StandardScaler()
-            self.X = scaler.fit_transform(self.X_raw)
-        else:
-            self.X = self.X_raw.copy()
+class LOFOutlierDetector(BaseOutlierDetector):
+    def __init__(self, df, features, time_col="time", contamination=0.05,
+                 scale=True, filter_percentile=None, threshold_percentile=99):
+        super().__init__(df, features, time_col, scale, filter_percentile, threshold_percentile)
+        self.contamination = contamination
+        self.model = LocalOutlierFactor(n_neighbors=20, contamination=contamination)
 
     def fit(self):
-        self.preprocess()
-        if self.model is None:
-            self.model = LocalOutlierFactor(n_neighbors=20, contamination=self.contamination)
-        self.is_outlier = self.model.fit_predict(self.X) == -1
+        X = self.df_clean[self.features].values
+        y_pred = self.model.fit_predict(X)
         self.scores = -self.model.negative_outlier_factor_
-
-    def plot(self):
-        if self.X.shape[1] == 2:
-            X_plot = self.X
-        else:
-            X_plot = PCA(n_components=2).fit_transform(self.X)
-
-        fig, ax = plt.subplots(figsize=(8, 6))
-        sc = ax.scatter(X_plot[~self.is_outlier, 0], X_plot[~self.is_outlier, 1],
-                        c=self.scores[~self.is_outlier], cmap='coolwarm', edgecolor='k', label='Inliers')
-        ax.scatter(X_plot[self.is_outlier, 0], X_plot[self.is_outlier, 1],
-                   c='red', edgecolor='k', label='Outliers')
-        cb = plt.colorbar(sc, ax=ax)
-        cb.set_label("LOF Outlier Score")
-        ax.set_title("Local Outlier Factor (LOF) Detection")
-        ax.set_xlabel("Component 1")
-        ax.set_ylabel("Component 2")
-        ax.legend()
-        ax.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-
-# === Example Usage ===
-# Generate data
-np.random.seed(42)
-X_normal = np.random.randn(100, 2) * 0.75 + np.array([2, 2])
-X_outliers = np.random.uniform(low=-2, high=6, size=(5, 2))
-X_all = np.vstack([X_normal, X_outliers])
-
-# Use the LOFOutlierDetector class
-lof_detector = LOFOutlierDetector(X_all, contamination=0.05)
-lof_detector.fit()
-lof_detector.plot()
-
-custom_model = LocalOutlierFactor(n_neighbors=10, metric='manhattan', contamination=0.1)
-lof = LOFOutlierDetector(X_all, model=custom_model)
-lof.fit()
-lof.plot()
+        
+        self.df_clean["outlier_score"] = self.scores
+        self.is_outlier  = self.df_clean["is_outlier"] = y_pred == -1
+        self.fitted = True
