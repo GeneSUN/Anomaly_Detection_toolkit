@@ -27,3 +27,31 @@ When you care about **segments** that look abnormal (e.g., an entire day that de
 - **When to use:** Pattern/shape deviations over a window (e.g., `[xₜ,…,xₜ+W]`).
 - **Typical methods:** **Autoencoders** (reconstruction error over windows), distance to shape prototypes, (optionally Matrix Profile/shapelet ideas).
 - **Output:** Subsequence anomalies (unusual patterns over time).
+
+
+---
+
+## 2) Multivariate (multiple features)
+
+### A. Proximity-Based (point anomalies in feature space)
+When you care about the **overall state** across several features (e.g., 5G SNR, RSRP, RSRQ, …) rather than each feature separately.
+
+- **When to use:** Joint behavior across features matters (correlations, clusters).
+- **Typical methods:** **K-Means** (distance to centroid), **k-NN distance**, **LOF**, **DBSCAN**.
+- **Output:** Point anomalies in high-dimensional space.
+
+### B. Multivariate Time-Series (temporal + cross-feature)
+Extend proximity ideas with **time dependence** across **all** features.
+
+- **When to use:** Both inter-feature relationships and temporal structure are important.
+- **Typical methods:** State-space/VAR residuals, sequence **autoencoders** over multivariate windows, temporal anomaly scores.
+- **Output:** Point or subsequence anomalies with time context.
+
+### C. Multivariate Unusual Shape (subsequence anomalies across features)
+Detect **segments** whose joint shape across features is unusual.
+
+- **When to use:** Abnormal multi-feature patterns over windows (e.g., an hour/day).
+- **Typical methods:** Windowed **(variational) autoencoders**, sequence models; compare window reconstructions/embeddings.
+- **Trade-off:** As model complexity increases, **interpretability typically decreases**.
+
+---
