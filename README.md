@@ -29,7 +29,6 @@ When the current value depends on recent history and/or there is seasonality.
 
 - **When to use:** Autocorrelation, trends, clear daily/weekly patterns.
 - **Typical methods:** **Exponential Smoothing / ETS**, **ARIMA / SARIMA**, STL decomposition, residual-based thresholding.
-- **Output:** Point anomalies relative to a time-aware forecast/baseline. <p>
 
 https://medium.com/@injure21/time-series-anomaly-detection-with-arima-551a91d10fe4 <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ARIMA_anomaly/ARIMAAnomalyDetector.py <br>
@@ -37,7 +36,7 @@ https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ARIMA_anomaly/ARI
 https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt <br>
 
 ### C. Unusual Shape (subsequence anomalies)
-When you care about **segments** that look abnormal (e.g., an entire day that deviates from recent days), not just single points.
+When you care about **segments** that look abnormal, not just single points. <br>
 <img width="700" height="400" alt="image" src="https://github.com/user-attachments/assets/c5fa911d-c74f-43fc-978f-834335527a0b" />
 
 - **When to use:** Pattern/shape deviations over a window (e.g., `[xₜ,…,xₜ+W]`).
@@ -76,7 +75,7 @@ Extend proximity ideas with **time dependence** across **all** features.
 ### C. Multivariate Unusual Shape (subsequence anomalies across features)
 Detect **segments** whose joint shape across features is unusual.
 
-While extensions from A to **multivariate time series** (B) and **multivariate unusual shape detection** (C) provide richer modeling power, they also introduce higher complexity. As the models become more sophisticated, their **interpretability tends to decrease**.
+While extensions from (Proximity-Based ) A to **multivariate time series** (B) and **multivariate unusual shape detection** (C) provide richer modeling power, they also introduce higher complexity. As the models become more sophisticated, their **interpretability tends to decrease**.
 
 ---
 
@@ -87,19 +86,41 @@ There are two main ways to build ensembles for anomaly detection:
 - Each detector runs separately on the same data.  
 - Results are combined at the end (e.g., by score averaging, voting).  
 
-### 2. **Sequential Ensembles**
-- Detectors are applied one after another.  
-- Each stage refines or filters the results from the previous stage.  
-
 https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0 <br>
-https://medium.com/@injure21/ensemble-methods-for-outlier-detection-2-sequential-ensemble-abff0fae80bc <br>
 https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7 <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/EnsembleOutlierDetector.py <br>
 https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z <br>
 
+### 2. **Sequential Ensembles**
+- Detectors are applied one after another.  
+- Each stage refines or filters the results from the previous stage.  
+
+https://medium.com/@injure21/ensemble-methods-for-outlier-detection-2-sequential-ensemble-abff0fae80bc <br>
+https://colab.research.google.com/drive/1LqBRw-p1OCP7VJ0Qn4qAA3i2H58_UCky
+
 ---
 
 ## 4) Novelty Detection vs Outlier Detection
+
+- **Outlier Detection**  
+  - Training and testing use the same dataset.  
+  - The data contains outliers, defined as observations that are far from the majority.  
+
+- **Novelty Detection**  
+  - Training and testing are different.  
+  - The training data is *clean* (no outliers) and serves as a reference.  
+  - New incoming observations are evaluated against this reference to detect anomalies.  
+
+<img width="1400" height="678" alt="image" src="https://github.com/user-attachments/assets/35a8a193-daea-4732-9c95-11e14b8c0f30" />
+
+### How to Use This Repository
+
+This repository supports both **Outlier Detection** and **Novelty Detection**.  
+You can control the behavior with the parameter `new_idx`:
+
+- `new_idx = "all"` → Perform **Outlier Detection** (entire dataset used).  
+- `new_idx = slice(-1, None)` → Perform **Novelty Detection** (detect only the last point).  
+- `new_idx = slice(-n, None)` → Detect the last **n** points as novelties.
 
 https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962
 https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
@@ -108,10 +129,20 @@ https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scroll
 
 ## 5) Multi-Models Distributed Computing
 
+In real-world applications, you often need to run **many anomaly detection models in parallel**.  
+For example, monitoring thousands of customers to detect irregular behavior in real time.  
+
+This can be achieved in:  
+- Python (single-machine environment): Suitable for smaller datasets or prototyping.  
+- **Spark (distributed environment):** Recommended for large-scale scenarios, enabling parallel anomaly detection across millions of records efficiently.  
+
+
 https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205
 https://colab.research.google.com/drive/1OA3EKXqiuMsQ5loQM7MlJVl_OuBpWAAt#scrollTo=32fjpkeS-nYP
-https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=RV6KSqCIP-U-
+
 https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=d82NG7mNxm0c
+https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=RV6KSqCIP-U-
+
 
 
 
