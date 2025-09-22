@@ -79,13 +79,13 @@ Detect **segments** whose joint shape across features is unusual.
 While extensions from A to **multivariate time series** (B) and **multivariate unusual shape detection** (C) provide richer modeling power, they also introduce higher complexity. As the models become more sophisticated, their **interpretability tends to decrease**.
 
 ## 3) Outlier Ensembles
-### Ensemble Categorization
+
 There are two main ways to build ensembles for anomaly detection:
-1. **Independent (Parallel) Ensembles**
+### 1. **Independent (Parallel) Ensembles**
 - Each detector runs separately on the same data.  
 - Results are combined at the end (e.g., by score averaging, voting).  
 
-2. **Sequential Ensembles**
+### 2. **Sequential Ensembles**
 - Detectors are applied one after another.  
 - Each stage refines or filters the results from the previous stage.  
 
@@ -95,23 +95,17 @@ https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/EnsembleOutlierDetector.py <br>
 https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z <br>
 
+## 4) Novelty Detection vs Outlier Detection
 
----
+https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962
+https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
 
-### Model Combination Strategies
+## 5) Multi-Models Distributed Computing
 
-Once you have outputs from multiple detectors, you can combine them in several ways:
+https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205
+https://colab.research.google.com/drive/1OA3EKXqiuMsQ5loQM7MlJVl_OuBpWAAt#scrollTo=32fjpkeS-nYP
+https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=RV6KSqCIP-U-
+https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=d82NG7mNxm0c
 
-- **Score Averaging**  
-  Normalize scores from each model to `[0, 1]`, then average them.  
-
-- **Max Score**  
-  Use the maximum score across models (conservative: flags anomalies if any model is confident).  
-
-- **Majority Vote**  
-  Each model votes anomalous vs. normal, and the final label is based on majority.  
-
-- **Weighted Voting**  
-  Assign weights based on model reliability/validation, then compute a weighted average of predictions.  
 
 
