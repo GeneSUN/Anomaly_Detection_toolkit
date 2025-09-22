@@ -53,7 +53,7 @@ When the current value depends on recent history and/or there is seasonality.
 https://medium.com/@injure21/time-series-anomaly-detection-with-arima-551a91d10fe4 <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetector.py <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetectorFuture.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/MovingAverage/EWMAAnomalyDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/EWMAAnomalyDetector.py <br>
 https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt <br>
 
 ### C. Unusual Shape (subsequence anomalies)
@@ -88,7 +88,7 @@ https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detec
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KMeansOutlierDetector.py <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KNNOutlierDetector.py <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/LOFOutlierDetector.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/DBSCAN/DBSCANOutlierDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/tree/main/Model/Proximity-based%20/DBSCANOutlierDetector.py <br>
 https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=KD3jJx5Rh5dx <br>
 
 ### B. Multivariate Time-Series (temporal + cross-feature)
