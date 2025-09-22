@@ -1,15 +1,35 @@
 # Anomaly_Detection_toolkit
-this file contains anomaly detection related script/model/automation, and explanation.
+This file contains anomaly detection related script/model/automation, and explanation.
+
+## Outline
+
+1. [Univariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - [Extreme-Value (no time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - [Time-Series (with time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - [Unusual Shape (subsequence anomalies)](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+2. [Multivariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - [Proximity-Based](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+3. [Outlier Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - [Independent (Parallel) Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - [Sequential Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+4. [Novelty Detection vs Outlier Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+    - Outlier Detection
+    - Sequential Ensembles
+5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)  
+    - Python Environment
+    - Distributed Computing of Spark
+
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
-
-This diagram is a quick decision map for choosing an anomaly-detection approach based on (1) how many features you have and (2) whether you care about **individual points** or **subsequences/shapes**.
+This diagram is a quick decision map for choosing an anomaly-detection approach based on <br>
+- (1) how many features you have  <br>
+- (2) whether you care about **individual points** or **subsequences/shapes**.
 
 ## 1) Univariate (single feature)
 
 ### A. Extreme-Value (no time dependence)
 When observations are independent and you only care about unusually **large/small** values.
-<img width="700" height="400" alt="image" src="https://github.com/user-attachments/assets/dea53d3a-c469-40e0-8f68-33702a91ed85" />
+<img width="600" height="350" alt="image" src="https://github.com/user-attachments/assets/dea53d3a-c469-40e0-8f68-33702a91ed85" />
 
 - **When to use:** No strong temporal correlation or seasonality.
 - **Typical methods:** Robust z-score/quantiles, **Kernel Density Estimation (KDE)**, **Gaussian Mixture Models (GMM)**.
@@ -33,6 +53,7 @@ When the current value depends on recent history and/or there is seasonality.
 https://medium.com/@injure21/time-series-anomaly-detection-with-arima-551a91d10fe4 <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ARIMA_anomaly/ARIMAAnomalyDetector.py <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ARIMA_anomaly/ARIMAAnomalyDetectorFuture.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ETS/EWMA/MovingAverage/EWMAAnomalyDetector.py <br>
 https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt <br>
 
 ### C. Unusual Shape (subsequence anomalies)
@@ -55,8 +76,8 @@ https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scroll
 ### A. Proximity-Based (point anomalies in feature space)
 When you care about the **overall state** across several features (e.g., 5G SNR, RSRP, RSRQ, …) rather than each feature separately.
 <p float="left">
-  <img src="https://github.com/user-attachments/assets/ea4c0c0c-b250-4265-9597-10bcce19d50d" width="45%" />
-  <img src="https://github.com/user-attachments/assets/bc29ccc1-9ba6-43a5-b464-e2ca03750296" width="45%" />
+  <img src="https://github.com/user-attachments/assets/ea4c0c0c-b250-4265-9597-10bcce19d50d" width="40%" />
+  <img src="https://github.com/user-attachments/assets/bc29ccc1-9ba6-43a5-b464-e2ca03750296" width="40%" />
 </p>
 
 - **When to use:** Joint behavior across features matters (correlations, clusters).
@@ -67,6 +88,7 @@ https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detec
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/KMeansOutlierDetector.py <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/KNNOutlierDetector.py <br>
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/LOFOutlierDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/DBSCAN/DBSCANOutlierDetector.py <br>
 https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=KD3jJx5Rh5dx <br>
 
 ### B. Multivariate Time-Series (temporal + cross-feature)
@@ -85,6 +107,8 @@ There are two main ways to build ensembles for anomaly detection:
 ### 1. **Independent (Parallel) Ensembles**
 - Each detector runs separately on the same data.  
 - Results are combined at the end (e.g., by score averaging, voting).  
+<img width="615" height="207" alt="image" src="https://github.com/user-attachments/assets/cc2e07e6-63d8-43bd-87c8-3c863469c61e" />
+
 
 https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0 <br>
 https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7 <br>
@@ -97,6 +121,7 @@ https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scroll
 
 https://medium.com/@injure21/ensemble-methods-for-outlier-detection-2-sequential-ensemble-abff0fae80bc <br>
 https://colab.research.google.com/drive/1LqBRw-p1OCP7VJ0Qn4qAA3i2H58_UCky
+<img width="1043" height="91" alt="Screenshot 2025-09-22 at 10 50 44 AM" src="https://github.com/user-attachments/assets/2f4b8bcf-9cca-44e1-a5de-fd7d0d959af7" />
 
 ---
 
@@ -105,13 +130,15 @@ https://colab.research.google.com/drive/1LqBRw-p1OCP7VJ0Qn4qAA3i2H58_UCky
 - **Outlier Detection**  
   - Training and testing use the same dataset.  
   - The data contains outliers, defined as observations that are far from the majority.  
+<img width="600" height="405" alt="image" src="https://github.com/user-attachments/assets/3b9cb55c-9d4e-4b57-93a1-3de82ed9c04b" />
+
 
 - **Novelty Detection**  
   - Training and testing are different.  
   - The training data is *clean* (no outliers) and serves as a reference.  
   - New incoming observations are evaluated against this reference to detect anomalies.  
 
-<img width="1400" height="678" alt="image" src="https://github.com/user-attachments/assets/35a8a193-daea-4732-9c95-11e14b8c0f30" />
+<img width="600" height="400" alt="image" src="https://github.com/user-attachments/assets/35a8a193-daea-4732-9c95-11e14b8c0f30" />
 
 ### How to Use This Repository
 
@@ -134,7 +161,8 @@ For example, monitoring thousands of customers to detect irregular behavior in r
 
 This can be achieved in:  
 - Python (single-machine environment): Suitable for smaller datasets or prototyping.  
-- **Spark (distributed environment):** Recommended for large-scale scenarios, enabling parallel anomaly detection across millions of records efficiently.  
+- **Spark (distributed environment):** Recommended for large-scale scenarios, enabling parallel anomaly detection across millions of records efficiently.  <br>
+<img width="1956" height="366" alt="image" src="https://github.com/user-attachments/assets/9e1712f9-6af2-4101-a494-e5049c2bbf97" />
 
 
 https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205
