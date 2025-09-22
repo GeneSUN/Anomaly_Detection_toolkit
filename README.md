@@ -9,25 +9,45 @@ This diagram is a quick decision map for choosing an anomaly-detection approach 
 
 ### A. Extreme-Value (no time dependence)
 When observations are independent and you only care about unusually **large/small** values.
+<img width="700" height="400" alt="image" src="https://github.com/user-attachments/assets/dea53d3a-c469-40e0-8f68-33702a91ed85" />
 
 - **When to use:** No strong temporal correlation or seasonality.
 - **Typical methods:** Robust z-score/quantiles, **Kernel Density Estimation (KDE)**, **Gaussian Mixture Models (GMM)**.
 - **Output:** Point anomalies (outliers by value).
 
+https://medium.com/@injure21/kernel-density-estimation-for-anomaly-detection-715a945bc729 <br>
+This article explain kernel density estimation for anomaly detection <p>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/KDE/FeaturewiseKDENoveltyDetector.py <br>
+This class defined the kernel density estimation model <p>
+https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=WXniSVfCznS_ <br>
+This notebook use real-world example for step-by-step explanation of the article.<p>
+
+
 ### B. Time-Series (with time dependence)
 When the current value depends on recent history and/or there is seasonality.
+<img width="700" height="500" alt="image" src="https://github.com/user-attachments/assets/df1af6eb-0e9d-4791-8d34-a3ac4d0ae5ea" />
 
 - **When to use:** Autocorrelation, trends, clear daily/weekly patterns.
 - **Typical methods:** **Exponential Smoothing / ETS**, **ARIMA / SARIMA**, STL decomposition, residual-based thresholding.
-- **Output:** Point anomalies relative to a time-aware forecast/baseline.
+- **Output:** Point anomalies relative to a time-aware forecast/baseline. <p>
+
+https://medium.com/@injure21/time-series-anomaly-detection-with-arima-551a91d10fe4 <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ARIMA_anomaly/ARIMAAnomalyDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/ARIMA_anomaly/ARIMAAnomalyDetectorFuture.py <br>
+https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt <br>
 
 ### C. Unusual Shape (subsequence anomalies)
 When you care about **segments** that look abnormal (e.g., an entire day that deviates from recent days), not just single points.
+<img width="700" height="400" alt="image" src="https://github.com/user-attachments/assets/c5fa911d-c74f-43fc-978f-834335527a0b" />
 
 - **When to use:** Pattern/shape deviations over a window (e.g., `[xₜ,…,xₜ+W]`).
 - **Typical methods:** **Autoencoders** (reconstruction error over windows), distance to shape prototypes, (optionally Matrix Profile/shapelet ideas).
 - **Output:** Subsequence anomalies (unusual patterns over time).
 
+https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909 <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/AutoEncoder/AutoencoderAnomalyDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/AutoEncoder/MultiTimeSeriesAutoencoder.py <br>
+https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o <br>
 
 ---
 
@@ -35,23 +55,63 @@ When you care about **segments** that look abnormal (e.g., an entire day that de
 
 ### A. Proximity-Based (point anomalies in feature space)
 When you care about the **overall state** across several features (e.g., 5G SNR, RSRP, RSRQ, …) rather than each feature separately.
+<p float="left">
+  <img src="https://github.com/user-attachments/assets/ea4c0c0c-b250-4265-9597-10bcce19d50d" width="45%" />
+  <img src="https://github.com/user-attachments/assets/bc29ccc1-9ba6-43a5-b464-e2ca03750296" width="45%" />
+</p>
 
 - **When to use:** Joint behavior across features matters (correlations, clusters).
 - **Typical methods:** **K-Means** (distance to centroid), **k-NN distance**, **LOF**, **DBSCAN**.
 - **Output:** Point anomalies in high-dimensional space.
 
+https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detection-5ad9fabb30a7 <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/KMeansOutlierDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/KNNOutlierDetector.py <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/LOFOutlierDetector.py <br>
+https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=KD3jJx5Rh5dx <br>
+
 ### B. Multivariate Time-Series (temporal + cross-feature)
 Extend proximity ideas with **time dependence** across **all** features.
-
-- **When to use:** Both inter-feature relationships and temporal structure are important.
-- **Typical methods:** State-space/VAR residuals, sequence **autoencoders** over multivariate windows, temporal anomaly scores.
-- **Output:** Point or subsequence anomalies with time context.
 
 ### C. Multivariate Unusual Shape (subsequence anomalies across features)
 Detect **segments** whose joint shape across features is unusual.
 
-- **When to use:** Abnormal multi-feature patterns over windows (e.g., an hour/day).
-- **Typical methods:** Windowed **(variational) autoencoders**, sequence models; compare window reconstructions/embeddings.
-- **Trade-off:** As model complexity increases, **interpretability typically decreases**.
+While extensions from A to **multivariate time series** (B) and **multivariate unusual shape detection** (C) provide richer modeling power, they also introduce higher complexity. As the models become more sophisticated, their **interpretability tends to decrease**.
+
+## 3) Outlier Ensembles
+### Ensemble Categorization
+There are two main ways to build ensembles for anomaly detection:
+1. **Independent (Parallel) Ensembles**
+- Each detector runs separately on the same data.  
+- Results are combined at the end (e.g., by score averaging, voting).  
+
+2. **Sequential Ensembles**
+- Detectors are applied one after another.  
+- Each stage refines or filters the results from the previous stage.  
+
+https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0 <br>
+https://medium.com/@injure21/ensemble-methods-for-outlier-detection-2-sequential-ensemble-abff0fae80bc <br>
+https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7 <br>
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Proximity-based%20/EnsembleOutlierDetector.py <br>
+https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z <br>
+
 
 ---
+
+### Model Combination Strategies
+
+Once you have outputs from multiple detectors, you can combine them in several ways:
+
+- **Score Averaging**  
+  Normalize scores from each model to `[0, 1]`, then average them.  
+
+- **Max Score**  
+  Use the maximum score across models (conservative: flags anomalies if any model is confident).  
+
+- **Majority Vote**  
+  Each model votes anomalous vs. normal, and the final label is based on majority.  
+
+- **Weighted Voting**  
+  Assign weights based on model reliability/validation, then compute a weighted average of predictions.  
+
+
