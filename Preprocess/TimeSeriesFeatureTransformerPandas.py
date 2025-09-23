@@ -172,3 +172,77 @@ class TimeSeriesFeatureTransformerPandas:
                 self.forward_fill(**ffill_kwargs)
         return self
 
+
+
+def split_time_series(
+    df: pd.DataFrame,
+    window_size: int,
+    step_size: int,
+    entity_col: str = "entity",
+    time_col: str = "time",
+    subseries_col: str = "subseries_id",
+    time_fmt: str = "%Y%m%d%H%M%S",
+    id_format: str = "time"  # options: "time" → entity_starttime, "index" → entity-index
+) -> pd.DataFrame:
+    """
+    Split each entity's time series into overlapping subseries.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe containing multiple time series.
+    window_size : int
+        Number of rows in each subseries (window length).
+    step_size : int
+        Number of rows to shift between windows.
+    entity_col : str
+        Column identifying each entity (e.g., customer/device).
+    time_col : str
+        Timestamp column (must be sortable).
+    subseries_col : str
+        Name for the generated subseries identifier column.
+    time_fmt : str
+        Datetime format for labeling subseries start times (if id_format="time").
+    id_format : str
+        How to name subseries IDs:
+        - "time": {entity}_{start_time} (default)
+        - "index": {entity}-{window_index}
+
+    Returns
+    -------
+    pd.DataFrame
+        Original rows annotated with a new `subseries_col` giving subseries membership.
+    """
+    assert window_size > 0 and step_size > 0, "window_size and step_size must be positive"
+
+    # Ensure time is datetime
+    if not np.issubdtype(df[time_col].dtype, np.datetime64):
+        df = df.copy()
+        df[time_col] = pd.to_datetime(df[time_col])
+
+    results = []
+
+    # Process each entity independently
+    for entity, group in df.groupby(entity_col):
+        group = group.sort_values(time_col).reset_index(drop=True)
+        n = len(group)
+        start_indices = range(0, n - window_size + 1, step_size)
+
+        for idx, start in enumerate(start_indices):
+            end = start + window_size
+            sub_df = group.iloc[start:end].copy()
+
+            if id_format == "time":
+                start_time = sub_df[time_col].iloc[0].strftime(time_fmt)
+                sub_id = f"{entity}_{start_time}"
+            elif id_format == "index":
+                sub_id = f"{entity}-{idx}"
+            else:
+                raise ValueError("id_format must be 'time' or 'index'")
+
+            sub_df[subseries_col] = sub_id
+            results.append(sub_df)
+
+    return pd.concat(results, ignore_index=True) if results else pd.DataFrame(columns=df.columns.tolist() + [subseries_col])
+
+
