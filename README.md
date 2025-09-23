@@ -18,7 +18,12 @@ This file contains anomaly detection related script/model/automation, and explan
 5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)  
     - Python Environment
     - Distributed Computing of Spark
-
+6. Appendix
+    - Preprocess
+    - Feature Engineering
+    - Hyperparameter
+    - Evaluation
+   
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
 This diagram is a quick decision map for choosing an anomaly-detection approach based on <br>
@@ -171,6 +176,21 @@ https://colab.research.google.com/drive/1OA3EKXqiuMsQ5loQM7MlJVl_OuBpWAAt#scroll
 https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=d82NG7mNxm0c
 https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=RV6KSqCIP-U-
 
+## 6) Appendix
+### Preprocess
+
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeries_Preprocess.ipynb
+https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
+
+### Feature Engineering
+
+
+### Hyperparameter
+
+
+### Evaluation
+
+https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299
 
 
 
