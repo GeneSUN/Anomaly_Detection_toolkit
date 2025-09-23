@@ -19,10 +19,10 @@ This file contains anomaly detection related script/model/automation, and explan
     - Python Environment
     - Distributed Computing of Spark
 6. Appendix
-    - Preprocess
-    - Feature Engineering
-    - Hyperparameter
-    - Evaluation
+    - [Preprocess](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#preprocess)
+    - [Feature Engineering](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#feature-engineering)
+    - [Hyperparameter](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#hyperparameter)
+    - [Evaluation](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#evaluation)
    
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
