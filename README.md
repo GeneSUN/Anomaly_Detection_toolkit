@@ -14,7 +14,7 @@ This file contains anomaly detection related script/model/automation, and explan
     - [Sequential Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
 4. [Novelty Detection vs Outlier Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
     - Outlier Detection
-    - Sequential Ensembles
+    - Novelty Detection
 5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)  
     - Python Environment
     - Distributed Computing of Spark
