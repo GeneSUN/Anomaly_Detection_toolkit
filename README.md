@@ -18,7 +18,7 @@ This file contains anomaly detection related script/model/automation, and explan
 5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)  
     - Python Environment
     - Distributed Computing of Spark
-6. Appendix
+6. [Appendix](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#6-appendix)
     - [Preprocess](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#preprocess)
     - [Feature Engineering](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#feature-engineering)
     - [Hyperparameter](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#hyperparameter)
