@@ -183,7 +183,7 @@ https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSe
 https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
 
 ### Feature Engineering
-
+https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853
 
 ### Hyperparameter
 
