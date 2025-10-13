@@ -55,11 +55,11 @@ When the current value depends on recent history and/or there is seasonality.
 - **When to use:** Autocorrelation, trends, clear daily/weekly patterns.
 - **Typical methods:** **Exponential Smoothing / ETS**, **ARIMA / SARIMA**, STL decomposition, residual-based thresholding.
 
-https://medium.com/@injure21/time-series-anomaly-detection-with-arima-551a91d10fe4 <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetector.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetectorFuture.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/EWMAAnomalyDetector.py <br>
-https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt <br>
+[Time Series Anomaly Detection with ARIMA](https://medium.com/@injure21/time-series-anomaly-detection-with-arima-551a91d10fe4 )
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetector.py <br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetectorFuture.py <br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/EWMAAnomalyDetector.py <br>
+- https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt <br>
 
 ### C. Unusual Shape (subsequence anomalies)
 When you care about **segments** that look abnormal, not just single points. <br>
@@ -69,10 +69,10 @@ When you care about **segments** that look abnormal, not just single points. <br
 - **Typical methods:** **Autoencoders** (reconstruction error over windows), distance to shape prototypes, (optionally Matrix Profile/shapelet ideas).
 - **Output:** Subsequence anomalies (unusual patterns over time).
 
-https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909 <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/AutoencoderAnomalyDetector.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/MultiTimeSeriesAutoencoder.py <br>
-https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o <br>
+[Autoencoders for Time Series Anomaly Detection: A Visual and Practical Guide](https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909)
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/AutoencoderAnomalyDetector.py 
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/MultiTimeSeriesAutoencoder.py 
+- https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o 
 
 ---
 
@@ -88,13 +88,12 @@ When you care about the **overall state** across several features (e.g., 5G SNR,
 - **When to use:** Joint behavior across features matters (correlations, clusters).
 - **Typical methods:** **K-Means** (distance to centroid), **k-NN distance**, **LOF**, **DBSCAN**.
 - **Output:** Point anomalies in high-dimensional space.
-
-https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detection-5ad9fabb30a7 <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KMeansOutlierDetector.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KNNOutlierDetector.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/LOFOutlierDetector.py <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/tree/main/Model/Proximity-based%20/DBSCANOutlierDetector.py <br>
-https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=KD3jJx5Rh5dx <br>
+[Multivariate and Proximity-Based Detection](https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detection-5ad9fabb30a7 )<br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KMeansOutlierDetector.py <br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KNNOutlierDetector.py <br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/LOFOutlierDetector.py <br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/tree/main/Model/Proximity-based%20/DBSCANOutlierDetector.py <br>
+- https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=KD3jJx5Rh5dx <br>
 
 ### B. Multivariate Time-Series (temporal + cross-feature)
 Extend proximity ideas with **time dependence** across **all** features.
@@ -114,18 +113,16 @@ There are two main ways to build ensembles for anomaly detection:
 - Results are combined at the end (e.g., by score averaging, voting).  
 <img width="615" height="207" alt="image" src="https://github.com/user-attachments/assets/cc2e07e6-63d8-43bd-87c8-3c863469c61e" />
 
-
-https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0 <br>
-https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7 <br>
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/EnsembleOutlierDetector.py <br>
-https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z <br>
+[Ensemble Methods for Outlier Detection](https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0) <br>
+[Independent, Model-Centric Ensemble](https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7) <br>
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/EnsembleOutlierDetector.py <br>
+- https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z <br>
 
 ### 2. **Sequential Ensembles**
 - Detectors are applied one after another.  
 - Each stage refines or filters the results from the previous stage.  
-
-https://medium.com/@injure21/ensemble-methods-for-outlier-detection-2-sequential-ensemble-abff0fae80bc <br>
-https://colab.research.google.com/drive/1LqBRw-p1OCP7VJ0Qn4qAA3i2H58_UCky
+[Sequential Ensemble](https://medium.com/@injure21/ensemble-methods-for-outlier-detection-2-sequential-ensemble-abff0fae80bc)
+- https://colab.research.google.com/drive/1LqBRw-p1OCP7VJ0Qn4qAA3i2H58_UCky
 <img width="1043" height="91" alt="Screenshot 2025-09-22 at 10 50 44 AM" src="https://github.com/user-attachments/assets/2f4b8bcf-9cca-44e1-a5de-fd7d0d959af7" />
 
 ---
@@ -153,9 +150,8 @@ You can control the behavior with the parameter `new_idx`:
 - `new_idx = "all"` → Perform **Outlier Detection** (entire dataset used).  
 - `new_idx = slice(-1, None)` → Perform **Novelty Detection** (detect only the last point).  
 - `new_idx = slice(-n, None)` → Detect the last **n** points as novelties.
-
-https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962
-https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
+[Difference between Outlier Detection and Novelty Detection](https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962)
+- https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
 
 ---
 
@@ -169,25 +165,24 @@ This can be achieved in:
 - **Spark (distributed environment):** Recommended for large-scale scenarios, enabling parallel anomaly detection across millions of records efficiently.  <br>
 <img width="1956" height="366" alt="image" src="https://github.com/user-attachments/assets/9e1712f9-6af2-4101-a494-e5049c2bbf97" />
 
+[A practical guide to parallelizing thousands of models — from pandas to PySpark to GPU acceleration](https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205)
 
-https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205
-https://colab.research.google.com/drive/1OA3EKXqiuMsQ5loQM7MlJVl_OuBpWAAt#scrollTo=32fjpkeS-nYP
-
-https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=d82NG7mNxm0c
-https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=RV6KSqCIP-U-
+- https://colab.research.google.com/drive/1OA3EKXqiuMsQ5loQM7MlJVl_OuBpWAAt#scrollTo=32fjpkeS-nYP
+- https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=d82NG7mNxm0c
+- https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=RV6KSqCIP-U-
 
 ## 6) ML Toolkit
 ### Preprocess
 
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeries_Preprocess.ipynb
-https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeries_Preprocess.ipynb
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
 
 ### Feature Engineering and Hyperparameter
-https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853
+[Feature Engineering for Unsupervised Outlier Detection: Practical Strategies and Pitfalls](https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853)
+
 
 ### Evaluation
-
-https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299
+[Evaluation of Unsupervised Outlier Detection](https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299)
 
 
 
