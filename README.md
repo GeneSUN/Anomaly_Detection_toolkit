@@ -185,4 +185,7 @@ This can be achieved in:
 [Evaluation of Unsupervised Outlier Detection](https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299)
 
 
-
+## * Reference
+- [**ADTK**](https://adtk.readthedocs.io/en/stable/) — A **versatile** Python toolkit for rule-based and statistical anomaly detection in time series.  
+- [**Awesome Time Series Anomaly Detection**](https://github.com/rob-med/awesome-TS-anomaly-detection) — A curated list of resources, libraries, and papers focused on **time series** anomaly detection.  
+- [**Anomalib**](https://github.com/open-edge-platform/anomalib) — A **deep learning–based** library offering state-of-the-art algorithms and pipelines for anomaly detection and localization.  
