@@ -27,8 +27,8 @@ This file contains anomaly detection related script/model/automation, and explan
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
 This diagram is a quick decision map for choosing an anomaly-detection approach based on <br>
-- (1) how many features you have  <br>
-- (2) whether you care about **individual points** or **subsequences/shapes**.
+- how many features you have  <br>
+- whether you care about **individual points** or **subsequences/shapes**.
 
 ## 1) Univariate (single feature)
 
@@ -50,7 +50,11 @@ This notebook use real-world example for step-by-step explanation of the article
 
 ### B. Time-Series (with time dependence)
 When the current value depends on recent history and/or there is seasonality.
-<img width="700" height="500" alt="image" src="https://github.com/user-attachments/assets/df1af6eb-0e9d-4791-8d34-a3ac4d0ae5ea" />
+<p align="center">
+    <img width="700" height="470" alt="image" src="https://github.com/user-attachments/assets/df1af6eb-0e9d-4791-8d34-a3ac4d0ae5ea" />
+    <img width="700" height="470" alt="image" src="https://github.com/user-attachments/assets/e3eda4ce-7afa-415d-a012-6664dc0d6880" />
+</p>
+
 
 - **When to use:** Autocorrelation, trends, clear daily/weekly patterns.
 - **Typical methods:** **Exponential Smoothing / ETS**, **ARIMA / SARIMA**, STL decomposition, residual-based thresholding.
@@ -178,14 +182,33 @@ This can be achieved in:
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
 
 ### Feature Engineering and Hyperparameter
-[Feature Engineering for Unsupervised Outlier Detection: Practical Strategies and Pitfalls](https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853)
+- [Feature Engineering for Unsupervised Outlier Detection: Practical Strategies and Pitfalls](https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853)
 
 
 ### Evaluation
-[Evaluation of Unsupervised Outlier Detection](https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299)
+- [Evaluation of Unsupervised Outlier Detection](https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299)
 
 
-## * Reference
+## 7) Reference
 - [**ADTK**](https://adtk.readthedocs.io/en/stable/) — A **versatile** Python toolkit for rule-based and statistical anomaly detection in time series.  
 - [**Awesome Time Series Anomaly Detection**](https://github.com/rob-med/awesome-TS-anomaly-detection) — A curated list of resources, libraries, and papers focused on **time series** anomaly detection.  
-- [**Anomalib**](https://github.com/open-edge-platform/anomalib) — A **deep learning–based** library offering state-of-the-art algorithms and pipelines for anomaly detection and localization.  
+- [**Anomalib**](https://github.com/open-edge-platform/anomalib) — A **deep learning–based** library offering state-of-the-art algorithms and pipelines for anomaly detection and localization.
+
+## 8) Challenge/Trade-off
+
+1. High Feature Variability complicate model generalization:
+    - The 50+ features vary widely in distribution, magnitude, and pattern.
+    - A single model with fixed hyperparameters does not generalize well across all features.
+    - Customizing hyperparameters or models for each feature is computationally intensive.
+
+2. Large-scale personalized models are computationally heavy:
+    - anomaly detection should be tailored per customer per feature using their historical data.
+    - This is computationally expensive for million users 50+ feature and infeasible at scale.
+
+3. Lack of Ground Truth:
+    - This is an unsupervised learning problem—no labels are available.
+    - It’s hard to **evaluate model performance** or **fine-tune hyperparameters**.
+
+**Solution:**
+- [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#5-multi-models-distributed-computing)
+- Trade-off Alternatives
