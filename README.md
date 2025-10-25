@@ -146,7 +146,7 @@ There are two main ways to build ensembles for anomaly detection:
 
 <img width="600" height="400" alt="image" src="https://github.com/user-attachments/assets/35a8a193-daea-4732-9c95-11e14b8c0f30" />
 
-### How to Use This Repository
+### This Repository is compatible for both Outlier Detection and Novelty Detection
 
 This repository supports both **Outlier Detection** and **Novelty Detection**.  
 You can control the behavior with the parameter `new_idx`:
@@ -154,6 +154,8 @@ You can control the behavior with the parameter `new_idx`:
 - `new_idx = "all"` → Perform **Outlier Detection** (entire dataset used).  
 - `new_idx = slice(-1, None)` → Perform **Novelty Detection** (detect only the last point).  
 - `new_idx = slice(-n, None)` → Detect the last **n** points as novelties.
+
+
 [Difference between Outlier Detection and Novelty Detection](https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962)
 - https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
 
