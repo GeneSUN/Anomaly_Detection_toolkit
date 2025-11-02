@@ -23,6 +23,8 @@ This file contains anomaly detection related script/model/automation, and explan
     - [Feature Engineering](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#feature-engineering-and-hyperparameter)
     - [Hyperparameter](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#feature-engineering-and-hyperparameter)
     - [Evaluation](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#evaluation)
+7. [Model Library](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#7-reference)
+8. [Challenge/Trade-off](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#8-challengetrade-off)
    
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
@@ -191,11 +193,12 @@ This can be achieved in:
 - [Evaluation of Unsupervised Outlier Detection](https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299)
 
 
-## 7) Reference
+## 7) Model Library
 - [**ADTK**](https://adtk.readthedocs.io/en/stable/) — A **versatile** Python toolkit for rule-based and statistical anomaly detection in time series.  
 - [**Awesome Time Series Anomaly Detection**](https://github.com/rob-med/awesome-TS-anomaly-detection) — A curated list of resources, libraries, and papers focused on **time series** anomaly detection.  
 - [**Anomalib**](https://github.com/open-edge-platform/anomalib) — A **deep learning–based** library offering state-of-the-art algorithms and pipelines for anomaly detection and localization.
-
+- [**PyOD**](https://pyod.readthedocs.io/en/latest/)/[**PyGOD**](https://docs.pygod.org/en/latest/) - Python library for traditional ML/DL/graph outlier detection 
+  
 ## 8) Challenge/Trade-off
 
 1. High Feature Variability complicate model generalization:
