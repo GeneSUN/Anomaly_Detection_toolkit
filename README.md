@@ -29,8 +29,8 @@ This file contains anomaly detection related script/model/automation, and explan
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
 This diagram is a quick decision map for choosing an anomaly-detection approach based on <br>
-- how many features you have  <br>
-- whether you care about **individual points** or **subsequences/shapes**.
+- **how many features you have**  <br>
+- **whether you care about **individual points** or **subsequences/shapes**.**
 
 ## 1) Univariate (single feature)
 
