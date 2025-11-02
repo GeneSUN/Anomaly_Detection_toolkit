@@ -201,16 +201,15 @@ This can be achieved in:
   
 ## 8) Challenge/Trade-off
 
-1. High Feature Variability complicate model generalization:
+1. **High Feature Variability complicate model generalization:**
     - The 50+ features vary widely in distribution, magnitude, and pattern.
     - A single model with fixed hyperparameters does not generalize well across all features.
     - Customizing hyperparameters or models for each feature is computationally intensive.
-
-2. Large-scale personalized models are computationally heavy:
+2. **Large-scale personalized models are computationally heavy:**
     - anomaly detection should be tailored per customer per feature using their historical data.
     - This is computationally expensive for million users 50+ feature and infeasible at scale.
 
-3. Lack of Ground Truth:
+3. **Lack of Ground Truth:**
     - This is an unsupervised learning problem—no labels are available.
     - It’s hard to **evaluate model performance** or **fine-tune hyperparameters**.
 
