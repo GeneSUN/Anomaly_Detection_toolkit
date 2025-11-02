@@ -3,26 +3,26 @@ This file contains anomaly detection related script/model/automation, and explan
 
 ## Outline
 
-1. [Univariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-    - [Extreme-Value (no time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-    - [Time-Series (with time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-    - [Unusual Shape (subsequence anomalies)](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-2. [Multivariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-    - [Proximity-Based](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-3. [Outlier Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-    - [Independent (Parallel) Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-    - [Sequential Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
-4. [Novelty Detection vs Outlier Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)
+1. [Univariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#1-univariate-single-feature)
+    - [Extreme-Value (no time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#a-extreme-value-no-time-dependence)
+    - [Time-Series (with time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#b-time-series-with-time-dependence)
+    - [Unusual Shape (subsequence anomalies)](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#c-unusual-shape-subsequence-anomalies)
+2. [Multivariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#2-multivariate-multiple-features)
+    - [Proximity-Based](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#a-proximity-based-point-anomalies-in-feature-space)
+3. [Outlier Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#3-outlier-ensembles)
+    - [Independent (Parallel) Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#1-independent-parallel-ensembles)
+    - [Sequential Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#2-sequential-ensembles)
+4. [Novelty Detection vs Outlier Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#4-novelty-detection-vs-outlier-detection)
     - Outlier Detection
     - Novelty Detection
-5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#1-univariate-single-feature)  
+5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#5-multi-models-distributed-computing)  
     - Python Environment
     - Distributed Computing of Spark
-6. [ML Toolkit](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#6-appendix)
-    - [Preprocess](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#preprocess)
-    - [Feature Engineering](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#feature-engineering)
-    - [Hyperparameter](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#hyperparameter)
-    - [Evaluation](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#evaluation)
+6. [ML Toolkit](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#6-ml-toolkit)
+    - [Preprocess](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#preprocess)
+    - [Feature Engineering](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#feature-engineering-and-hyperparameter)
+    - [Hyperparameter](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#feature-engineering-and-hyperparameter)
+    - [Evaluation](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#evaluation)
    
 <img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
 
