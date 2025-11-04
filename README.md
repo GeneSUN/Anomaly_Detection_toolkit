@@ -231,3 +231,6 @@ Notebooks:
 - [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#5-multi-models-distributed-computing)  
 - Practical trade-offs are discussed in the article and notebooks
 
+## License
+This project is licensed under the **MIT License**.  
+See the [LICENSE](./LICENSE) file for details.
