@@ -1,5 +1,13 @@
 # Anomaly_Detection_toolkit
 This repository contains anomaly detection–related scripts, models, automation utilities, and explanatory documentation.
+
+
+<img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
+
+This diagram provides a quick decision guide for selecting an anomaly detection approach based on:  
+- **number of features**  
+- whether you care about **individual points** or **subsequences/shapes**
+
 ## Table of Contents
 - [1. Univariate Anomaly Detection](#1-univariate-single-feature)
   - [A. Extreme-Value (no time dependence)](#a-extreme-value-no-time-dependence)
@@ -21,38 +29,6 @@ This repository contains anomaly detection–related scripts, models, automation
   - [Evaluation](#evaluation)
 - [7. Model Library](#7-model-library)
 - [8. Challenge / Trade-off](#8-challengetrade-off)
-
-## Outline
-
-1. [Univariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#1-univariate-single-feature)
-    - [Extreme-Value (no time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#a-extreme-value-no-time-dependence)
-    - [Time-Series (with time dependence)](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#b-time-series-with-time-dependence)
-    - [Unusual Shape (subsequence anomalies)](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#c-unusual-shape-subsequence-anomalies)
-2. [Multivariate Anomaly Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#2-multivariate-multiple-features)
-    - [Proximity-Based](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#a-proximity-based-point-anomalies-in-feature-space)
-3. [Outlier Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#3-outlier-ensembles)
-    - [Independent (Parallel) Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#1-independent-parallel-ensembles)
-    - [Sequential Ensembles](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#2-sequential-ensembles)
-4. [Novelty Detection vs Outlier Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#4-novelty-detection-vs-outlier-detection)
-    - Outlier Detection  
-    - Novelty Detection
-5. [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#5-multi-models-distributed-computing)  
-    - Python Environment  
-    - Distributed Computing with Spark
-6. [ML Toolkit](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#6-ml-toolkit)
-    - [Preprocess](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#preprocess)
-    - [Feature Engineering](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#feature-engineering-and-hyperparameter)
-    - [Hyperparameter](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#feature-engineering-and-hyperparameter)
-    - [Evaluation](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#evaluation)
-7. [Model Library](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#7-reference)
-8. [Challenge/Trade-off](https://github.com/GeneSUN/Anomaly_Detection_toolkit?tab=readme-ov-file#8-challengetrade-off)
-   
-<img width="2254" height="278" alt="image" src="https://github.com/user-attachments/assets/5314b404-a9c9-4d00-b9fc-332ff2400c95" />
-
-This diagram provides a quick decision guide for selecting an anomaly detection approach based on:  
-- **number of features**  
-- whether you care about **individual points** or **subsequences/shapes**
-
 ---
 
 ## 1) Univariate (single feature)
