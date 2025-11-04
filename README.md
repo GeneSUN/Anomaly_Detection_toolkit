@@ -225,6 +225,8 @@ Notebooks:
     - Unsupervised problem
     - Hard to tune or evaluate performance
 
+<img width="2686" height="1296" alt="image" src="https://github.com/user-attachments/assets/4cc2acee-f03c-47ac-83ee-29482b310c64" />
+
 **Solution:**  
 - [Multi-Models Distributed Computing](https://github.com/GeneSUN/Anomaly_Detection_toolkit/edit/main/README.md#5-multi-models-distributed-computing)  
 - Practical trade-offs are discussed in the article and notebooks
