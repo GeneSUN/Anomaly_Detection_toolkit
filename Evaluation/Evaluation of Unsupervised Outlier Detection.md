@@ -30,6 +30,9 @@ Evaluating outlier detection algorithms is inherently challenging due to:
 
 **There is no evaluatlion in Unsupervised Learning!!!**
 
+<div align="right"> analogy of private chef vs buffet </div>
+
+
 ---
 
 ## Mechanism/Pattern -> Model
