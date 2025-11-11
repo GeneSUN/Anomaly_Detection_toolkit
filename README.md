@@ -198,7 +198,7 @@ Notebooks:
 - https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853
 
 ### Evaluation
-- https://medium.com/@injure21/outlier-detection-evaluation-4e58439f8299
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Evaluation/Evaluation%20of%20Unsupervised%20Outlier%20Detection.md
 
 ---
 
