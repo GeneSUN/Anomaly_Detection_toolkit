@@ -28,6 +28,8 @@ Evaluating outlier detection algorithms is inherently challenging due to:
 
 <img width="1265" height="375" alt="Untitled" src="https://github.com/user-attachments/assets/af73b88f-cfd0-49f1-808d-5f6b2dd55e28" />
 
+**There is no evaluatlion in Unsupervised Learning!!!**
+
 ---
 
 ## Mechanism/Pattern -> Model
