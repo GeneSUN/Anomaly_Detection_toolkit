@@ -102,6 +102,10 @@ You as doctor, need to detect the associated pattern, and i will help you design
 <img width="1293" height="375" alt="Untitled" src="https://github.com/user-attachments/assets/3e6ac719-402f-42eb-9275-a4e497aaeab1" />
 
 
+**Example**
+<img width="1964" height="798" alt="image" src="https://github.com/user-attachments/assets/0299dc04-4777-4f2b-99cb-fc5e789f43b6" />
+
+
 **From unsupervised to semi-supervised to supervised**
 
 
