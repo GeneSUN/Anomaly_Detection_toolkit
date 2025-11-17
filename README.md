@@ -191,6 +191,11 @@ Notebooks:
 ## 6) ML Toolkit
 
 ### Preprocess
+
+Real-time anomaly detection needs clean, consistent, and model-ready data, this [document](https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/feature_pipeline_for_realtime_anomaly_detection.md
+) explains the feature engineering workflow used in our real-time novelty detection pipeline, following a simple Bronze → Silver → Gold structure.
+
+
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeries_Preprocess.ipynb
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
 
