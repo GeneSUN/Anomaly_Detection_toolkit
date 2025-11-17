@@ -24,8 +24,7 @@ This diagram provides a quick decision guide for selecting an anomaly detection 
 - [5. Multi-Models Distributed Computing](#5-multi-models-distributed-computing)
 - [6. ML Toolkit](#6-ml-toolkit)
   - [Preprocess](#preprocess)
-  - [Feature Engineering](#feature-engineering-and-hyperparameter)
-  - [Hyperparameter](#feature-engineering-and-hyperparameter)
+  - [Feature Selection and Hyperparameter Tuning](#feature-selection-and-hyperparameter)
   - [Evaluation](#evaluation)
 - [7. Model Library](#7-model-library)
 - [8. Challenge / Trade-off](#8-challengetrade-off)
@@ -199,7 +198,7 @@ Real-time anomaly detection needs clean, consistent, and model-ready data, this 
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeries_Preprocess.ipynb
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py
 
-### Feature Engineering and Hyperparameter
+### Feature Selection and Hyperparameter
 - https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853
 
 ### Evaluation
