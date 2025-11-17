@@ -246,3 +246,35 @@ def split_time_series(
     return pd.concat(results, ignore_index=True) if results else pd.DataFrame(columns=df.columns.tolist() + [subseries_col])
 
 
+def clean_zeros_and_forward_fill(df: DataFrame, cols_to_process: List[str], partition_col: str, order_col: str) -> DataFrame:
+    """
+    Performs a forward fill on specified columns of a PySpark DataFrame.
+
+    Args:
+        df (DataFrame): The input DataFrame.
+        cols_to_process (List[str]): A list of column names to apply forward fill.
+        partition_col (str): The column to partition the window by (e.g., 'sn').
+        order_col (str): The column to order the window by (e.g., 'time').
+
+    Returns:
+        DataFrame: The DataFrame with specified columns forward-filled.
+    """
+    window_spec = Window.partitionBy(partition_col).orderBy(order_col) \
+                        .rowsBetween(Window.unboundedPreceding, Window.currentRow)
+    # Calculate the mean of each column to use as a fallback value
+    mean_values = df.select([F.mean(col_name).alias(f"mean_{col_name}") for col_name in cols_to_process]).first()
+    for col_name in cols_to_process:
+        # Step 1: Replace 0 with nulls
+        df = df.withColumn(
+            col_name,
+            F.when(F.col(col_name) == 0, F.lit(None)).otherwise(F.col(col_name))
+        )
+        # Step 2: Forward fill the nulls
+        df = df.withColumn(
+            col_name,
+            F.last(F.col(col_name), ignorenulls=True).over(window_spec)
+        )
+        # Step 3: Fill any remaining nulls (e.g., at the beginning of the partition) with the mean
+        if mean_values is not None and mean_values[f"mean_{col_name}"] is not None:
+            df = df.fillna({col_name: mean_values[f"mean_{col_name}"]})
+    return df
