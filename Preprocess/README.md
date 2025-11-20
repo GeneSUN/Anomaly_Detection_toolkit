@@ -74,7 +74,7 @@ The Gold layer prepares data for real-time anomaly detection models,
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Preprocess/TimeSeriesFeatureTransformerPandas.py#L177
 - https://colab.research.google.com/drive/1z6PtK9nOo6h2e05E_UZAjFHDD-esBA-T#scrollTo=DNx790E7D097
   
-<img width="1203" height="990" alt="image" src="https://github.com/user-attachments/assets/d571d506-620f-4253-8c01-b016e80c5584" />
+<img width="503" height="990" alt="image" src="https://github.com/user-attachments/assets/d571d506-620f-4253-8c01-b016e80c5584" />
 
 ### unpivot transformation for distributed computing
 
