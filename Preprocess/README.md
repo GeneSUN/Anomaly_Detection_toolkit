@@ -34,7 +34,7 @@ At this stage, no feature engineering occurs.
 3. zeros are treated as nulls: like age, zero is not impossible; some machine use fill null with zero
   <img width="489" height="389" alt="image" src="https://github.com/user-attachments/assets/6e728555-4ad7-49dd-b7bc-58f36ed2a609" />
 
-4. Aggregation (agg) Aggregate raw events into a fixed frequency (default: hourly):
+4. Aggregation (agg): Aggregate raw events into a fixed frequency (default: hourly):
   <img width="463" height="547" alt="image" src="https://github.com/user-attachments/assets/73c478e5-2b23-4247-8bfa-573918a2fd35" />
 
 5. Differencing (diff): Compute smoothed increments
