@@ -29,12 +29,24 @@ At this stage, no feature engineering occurs.
 
 ✔ Key Goals
 
-- Convert Strings to Numerical Types
-- Forward Fill (ffill): Used when instrumentation gaps or network delays produce missing values:
-- Aggregation (agg) Aggregate raw events into a fixed frequency (default: hourly):
-- Differencing (diff): Compute smoothed increments
-- Log Transform (log)
-- zeros are treated as nulls: like age, zero is not impossible; some machine use fill null with zero
+1. Convert Strings to Numerical Types
+2. Forward Fill (ffill): Used when instrumentation gaps or network delays produce missing values:
+3. zeros are treated as nulls: like age, zero is not impossible; some machine use fill null with zero
+  <img width="489" height="389" alt="image" src="https://github.com/user-attachments/assets/6e728555-4ad7-49dd-b7bc-58f36ed2a609" />
+
+4. Aggregation (agg) Aggregate raw events into a fixed frequency (default: hourly):
+  <img width="463" height="547" alt="image" src="https://github.com/user-attachments/assets/73c478e5-2b23-4247-8bfa-573918a2fd35" />
+
+5. Differencing (diff): Compute smoothed increments
+  
+  <img width="405" height="547" alt="image" src="https://github.com/user-attachments/assets/5cb20652-7db1-4de7-a959-ef4108fa3edc" />
+
+6. Log Transform (log)
+
+  <img width="489" height="490" alt="image" src="https://github.com/user-attachments/assets/4da92a80-8c3a-4178-9bd6-bcaa081f4a6c" />
+
+  
+
 
 
 The full preprocessing implementation is available in the repository:
@@ -47,7 +59,7 @@ The full preprocessing implementation is available in the repository:
   
 To see how the transformer is used end-to-end, refer to the demo notebook:
 
-- **[Colab Usage Exampl](https://colab.research.google.com/drive/1z6PtK9nOo6h2e05E_UZAjFHDD-esBA-T)**  
+- **[Colab Usage Example](https://colab.research.google.com/drive/1z6PtK9nOo6h2e05E_UZAjFHDD-esBA-T)**  
   → Walks through loading raw data, running the transformer, visualizing outputs, and preparing series for anomaly detection  
   → [Notebook](https://colab.research.google.com/drive/1z6PtK9nOo6h2e05E_UZAjFHDD-esBA-T):  
   
