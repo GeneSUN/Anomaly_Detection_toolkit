@@ -178,8 +178,8 @@ Two environments:
 <img width="1956" height="366" alt="image" src="https://github.com/user-attachments/assets/9e1712f9-6af2-4101-a494-e5049c2bbf97" />
 
 Reference article:  
-https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205
-
+- https://medium.com/@injure21/scaling-time-series-modeling-spark-multiprocessing-and-gpu-side-by-sid-e353445ae205
+- https://github.com/GeneSUN/spark-performance-toolbox/blob/main/Distributed_Computing/Spark%20Packaging%20&%20Deploying%20Custom%20Module.md
 Notebooks:  
 - Spark: https://colab.research.google.com/drive/1OA3EKXqiuMsQ5loQM7MlJVl_OuBpWAAt
 - Python: https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY
