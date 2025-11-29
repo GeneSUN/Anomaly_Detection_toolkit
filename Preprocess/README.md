@@ -13,6 +13,7 @@ This document explains the feature engineering workflow used in our 5G Home real
 
 The goal is to turn noisy device logs into reliable input features that support fast and accurate anomaly detection for millions of 5G Home customers.
 
+example: https://github.com/GeneSUN/NetSignalOutlierPipeline/tree/main/src/Preprocessing
 
 
 ## 🥉 1. Bronze Layer — Raw Data Ingestion (Data Engineering Layer)
