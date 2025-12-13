@@ -15,11 +15,13 @@ Prediction-based anomaly detection with ARIMA can be used in two common ways:
 2. **In-sample (training data) reconstruction anomaly detection**  
    Fit the model on existing data, **reconstruct** the training data (in-sample fitted values), and flag points where the reconstructed values differ greatly from the observed values.
 
-**Analogy:**  
-Imagine a music teacher listening to a student play a familiar song. The teacher knows how the song should sound (the ARIMA model has learned the series pattern). If the student suddenly hits a very wrong note, it stands out — just like an anomaly deviating from the model’s expected behavior.
+
 
 ---
-## In-sample (training data) reconstruction anomaly detection
+## 1. In-sample (training data) reconstruction anomaly detection
+
+**Analogy:**  
+Imagine a music teacher listening to a student play a familiar song. The teacher knows how the song should sound (the ARIMA model has learned the series pattern). If the student suddenly hits a very wrong note, it stands out — just like an anomaly deviating from the model’s expected behavior.
 
 ### Step 1: Create and fit the ARIMA forecasting model
 
@@ -115,7 +117,7 @@ Implementation reference in your repository:
 
 ---
 
-## Out-of-sample (future) forecasting anomaly detection
+## 2. Out-of-sample (future) forecasting anomaly detection
 
 
 In addition to in-sample “reconstruction” anomaly detection, ARIMA can also be used for **out-of-sample (future) anomaly detection**. 
