@@ -118,10 +118,14 @@ Implementation reference in your repository:
 ## Out-of-sample (future) forecasting anomaly detection
 
 
-In addition to in-sample “reconstruction” anomaly detection, ARIMA can also be used for **out-of-sample (future) anomaly detection**. The workflow is essentially the same idea: fit an ARIMA/AutoARIMA model, generate **future forecasts with prediction intervals**, then compare each newly observed value against the interval. If the actual value falls outside the predicted range, it is flagged as an anomaly.
+In addition to in-sample “reconstruction” anomaly detection, ARIMA can also be used for **out-of-sample (future) anomaly detection**. 
+- The workflow is essentially the same idea:
+   - fit an ARIMA/AutoARIMA model,
+   - generate **future forecasts with prediction intervals**,
+   - then compare each newly observed value against the interval. If the actual value falls outside the predicted range, it is flagged as an anomaly.
 
-The key difference is scope: **out-of-sample detection only evaluates future points** (values that arrive after the model is trained), making it a natural choice for monitoring and alerting in production.
-
+- The key difference is scope: **out-of-sample detection only evaluates future points** (values out of the trained model)
+  
 The distinction between in-sample and out-of-sample ARIMA anomaly detection mirrors the difference between outlier detection (within known data) and novelty detection (on unseen future data).
 
 <img width="1589" height="490" alt="image" src="https://github.com/user-attachments/assets/4a7a31d2-4d0f-48f9-b471-4fa3b0a7423c" />
