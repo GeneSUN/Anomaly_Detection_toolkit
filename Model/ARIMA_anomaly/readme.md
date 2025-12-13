@@ -89,7 +89,8 @@ Notes:
 
 Visualization is essential to validate whether the detected anomalies make sense (e.g., spikes, drops, shifts), and to sanity-check false positives caused by model misfit, seasonality mismatch, or non-stationarity.
 
-<img width="3328" height="719" alt="image" src="https://github.com/user-attachments/assets/624fbafa-b1f8-4280-97a2-a56641f5c6bf" />
+<img width="1306" height="470" alt="image" src="https://github.com/user-attachments/assets/09e235af-bb57-4087-acc7-eb8fa1848731" />
+
 
 ---
 
@@ -130,7 +131,8 @@ In addition to in-sample “reconstruction” anomaly detection, ARIMA can also 
   
 The distinction between in-sample and out-of-sample ARIMA anomaly detection mirrors the difference between outlier detection (within known data) and novelty detection (on unseen future data).
 
-<img width="1589" height="490" alt="image" src="https://github.com/user-attachments/assets/4a7a31d2-4d0f-48f9-b471-4fa3b0a7423c" />
+<img width="1589" height="490" alt="image" src="https://github.com/user-attachments/assets/b6cfa64d-0503-42a5-8666-2be70a08a093" />
+
 
 - https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=2uuvAQgVVxuO
 
