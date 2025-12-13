@@ -7,6 +7,28 @@ This article covers:
 - **Practical code & notebooks:** scripts + Colab workflow from training to visualization  
 - **Result interpretation:** how to visualize and explain anomalies statistically and graphically  
 
+## Table of Contents
+
+- [Autoencoders for Time Series Anomaly Detection: A Visual and Practical Guide](#autoencoders-for-time-series-anomaly-detection-a-visual-and-practical-guide)
+  - [1. Intuition behind autoencoders](#1-intuition-behind-autoencoders)
+  - [2. Autoencoder methodology](#2-autoencoder-methodology)
+  - [3. Building an LSTM autoencoder](#3-building-an-lstm-autoencoder)
+    - [3.1 Build from scratch in PyTorch (manual)](#31-build-from-scratch-in-pytorch-manual)
+    - [3.2 Use time series libraries (PyTorch Forecasting + Lightning)](#32-use-time-series-libraries-pytorch-forecasting--lightning)
+    - [3.3 Use PyOD (recommended)](#33-use-pyod-recommended)
+    - [3.4 Full pipeline class (preprocess + train + visualize)](#34-full-pipeline-class-preprocess--train--visualize)
+  - [4. Model results: anomaly score](#4-model-results-anomaly-score)
+    - [4.1 From time series to anomaly score](#41-from-time-series-to-anomaly-score)
+    - [4.2 From anomaly score to outlier label](#42-from-anomaly-score-to-outlier-label)
+  - [5. Visualization](#5-visualization)
+    - [5.1 The challenge (unsupervised interpretability)](#51-the-challenge-unsupervised-interpretability)
+    - [5.2 A practical approach](#52-a-practical-approach)
+      - [5.2.1 Plot anomaly score distribution](#521-plot-anomaly-score-distribution)
+      - [5.2.2 Plot normal vs abnormal time series](#522-plot-normal-vs-abnormal-time-series)
+      - [5.2.3 Mean and spread](#523-mean-and-spread)
+  - [6. Higher-dimension time series](#6-higher-dimension-time-series)
+  - [🧠 Conclusion](#-conclusion)
+
 
 ---
 
