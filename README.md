@@ -76,11 +76,14 @@ Focuses on detecting **segments** that deviate from typical patterns.
 - **Output:** Subsequence anomalies
 
 References:  
-- Article: https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909  
+- Article:
+  - https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909
+  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/readme.md#32-use-time-series-libraries-pytorch-forecasting--lightning  
 - Code:  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/AutoencoderAnomalyDetector.py  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/MultiTimeSeriesAutoencoder.py  
-- Notebook: https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o  
+- Notebook: https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o
+- Project: https://github.com/GeneSUN/NetSignalOutlierPipeline/tree/main/src/modeling/global_autoencoder
 
 ---
 
