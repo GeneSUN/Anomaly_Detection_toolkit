@@ -42,7 +42,7 @@ Suitable when observations are independent and only extreme **high/low** values 
 
 References:  
 - Kernel density explanation: https://medium.com/@injure21/kernel-density-estimation-for-anomaly-detection-715a945bc729  
-- KDE class: https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/KDE/FeaturewiseKDENoveltyDetector.py  
+- KDE class: https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Extreme_Univariant/KDE/FeaturewiseKDENoveltyDetector.py  
 - Real-world notebook: https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=WXniSVfCznS_
 
 ---
