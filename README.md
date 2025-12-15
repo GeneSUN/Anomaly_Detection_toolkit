@@ -206,6 +206,7 @@ Real-time anomaly detection needs clean, consistent, and model-ready data, this 
 
 ### Feature Selection and Hyperparameter
 - https://medium.com/@injure21/feature-engineering-for-unsupervised-outlier-detection-practical-strategies-and-pitfalls-30a1155e5853
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Feature%20Selection%20and%20Hyperparameter.md
 
 ### Evaluation
 - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Evaluation/Evaluation%20of%20Unsupervised%20Outlier%20Detection.md
