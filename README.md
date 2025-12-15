@@ -168,7 +168,9 @@ You can control mode using `new_idx`:
 - `new_idx = slice(-n, None)` → Detect last **n** points as novelties
 
 References:  
-- Article: https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962  
+- Article:
+  - https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962
+  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Difference%20between%20Outlier%20Detection%20and%20Novelty%20Detection.md
 - Notebook:
   - https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
   - https://colab.research.google.com/drive/1A68Q-GfxEBiA2dCdPWSXJK8pL_ronhyZ
