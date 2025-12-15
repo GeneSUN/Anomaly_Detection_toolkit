@@ -4,7 +4,7 @@ This article covers:
 
 - **Conceptual overview:** how autoencoders work (intuition + methodology)  
 - **Model construction:** building an LSTM-based autoencoder (multiple approaches)  
-- **Practical code & notebooks:** scripts + Colab workflow from training to visualization  
+  - **Practical code & notebooks:** scripts + Colab workflow from training to visualization  
 - **Result interpretation:** how to visualize and explain anomalies statistically and graphically  
 
 ## Table of Contents
