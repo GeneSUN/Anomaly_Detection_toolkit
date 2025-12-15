@@ -264,7 +264,7 @@ You can think of each `[features, Time]` sample like a **grayscale 2D image**:
 The autoencoder learns patterns across **both time and features** — and detects anomalies in this “image-like” structure.
 
 <img width="755" height="711" alt="image" src="https://github.com/user-attachments/assets/371487f6-7bac-4f47-b4e4-391face0df68" />
-
+- https://colab.research.google.com/drive/1jXEZjyxvN-5LGE6Oe-FTHwPYru6N343Y
 
 ### Visualization becomes harder
 
