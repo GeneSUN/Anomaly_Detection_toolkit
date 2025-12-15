@@ -42,7 +42,7 @@ Suitable when observations are independent and only extreme **high/low** values 
 
 References:  
 - Kernel density explanation: https://medium.com/@injure21/kernel-density-estimation-for-anomaly-detection-715a945bc729  
-- KDE class: https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/KDE/FeaturewiseKDENoveltyDetector.py  
+- KDE class: https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Extreme_Univariant/KDE/FeaturewiseKDENoveltyDetector.py  
 - Real-world notebook: https://colab.research.google.com/drive/1qC-Gry8py_Icl0V8zNedlIeX3HFEKHuY#scrollTo=WXniSVfCznS_
 
 ---
@@ -63,7 +63,7 @@ References:
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetector.py  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/ARIMAAnomalyDetectorFuture.py  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/ARIMA_anomaly/EWMAAnomalyDetector.py  
-- End-to-end notebook: https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=5CMO3pbLVvTt
+- End-to-end notebook: https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L
 
 ---
 
@@ -76,11 +76,14 @@ Focuses on detecting **segments** that deviate from typical patterns.
 - **Output:** Subsequence anomalies
 
 References:  
-- Article: https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909  
+- Article:
+  - https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909
+  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/readme.md 
 - Code:  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/AutoencoderAnomalyDetector.py  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/MultiTimeSeriesAutoencoder.py  
-- Notebook: https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o  
+- Notebook: https://colab.research.google.com/drive/174QBd3_2k3e88UyC__jLLG45Ukk-PMBx#scrollTo=DJ8JVhSGc70o
+- Project: https://github.com/GeneSUN/NetSignalOutlierPipeline/tree/main/src/modeling/global_autoencoder
 
 ---
 
@@ -164,7 +167,9 @@ You can control mode using `new_idx`:
 
 References:  
 - Article: https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962  
-- Notebook: https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw  
+- Notebook:
+  - https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
+  - https://colab.research.google.com/drive/1A68Q-GfxEBiA2dCdPWSXJK8pL_ronhyZ
 
 ---
 
