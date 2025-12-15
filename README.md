@@ -101,7 +101,9 @@ Detects points that are far from the typical cluster/centroid in a high-dimensio
 - **Output:** High-dimensional point anomalies
 
 References:  
-- Article: https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detection-5ad9fabb30a7  
+- Article:
+  - https://medium.com/@injure21/types-of-anomalies-in-data-part-2-value-based-detection-5ad9fabb30a7
+  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/tree/main/Model/Proximity-based%20
 - Code:  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KMeansOutlierDetector.py  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/KNNOutlierDetector.py  
