@@ -271,7 +271,7 @@ The autoencoder learns patterns across **both time and features** — and detect
 In 1D, each sample is a line plot.  
 In multi-feature time series, each sample becomes a **heatmap**, and:
 
-<img width="1000" height="751" alt="image" src="https://github.com/user-attachments/assets/bd45da92-7af0-484e-9055-eff625dfd2d9" />
+<img width="400" height="751" alt="image" src="https://github.com/user-attachments/assets/bd45da92-7af0-484e-9055-eff625dfd2d9" />
 
 
 - comparing heatmaps is less intuitive,
