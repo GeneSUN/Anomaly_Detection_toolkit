@@ -167,7 +167,9 @@ You can control mode using `new_idx`:
 
 References:  
 - Article: https://medium.com/@injure21/difference-between-outlier-detection-and-novelty-detection-f21c21ed0962  
-- Notebook: https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw  
+- Notebook:
+  - https://colab.research.google.com/drive/1Gc7Em68p0ivqWJ98Cne7lyPb5TrTcZ-L#scrollTo=UKrOIuztVvzw
+  - https://colab.research.google.com/drive/1A68Q-GfxEBiA2dCdPWSXJK8pL_ronhyZ
 
 ---
 
