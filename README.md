@@ -78,7 +78,7 @@ Focuses on detecting **segments** that deviate from typical patterns.
 References:  
 - Article:
   - https://medium.com/@injure21/autoencoder-for-time-series-anomaly-detection-021d4b9c7909
-  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/readme.md#32-use-time-series-libraries-pytorch-forecasting--lightning  
+  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/readme.md 
 - Code:  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/AutoencoderAnomalyDetector.py  
   - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/AutoEncoder/MultiTimeSeriesAutoencoder.py  
