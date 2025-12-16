@@ -110,7 +110,8 @@ Ensemble methods can be categorized along two axes:
   - adding noise  
 
 These strategies offer different ways to trade off bias/variance and improve robustness.
-
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Independent-Ensemble.md
+- https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Sequential%20Ensemble.md
 ---
 
 ## 3. Model Combination for Outlier Ensembles
