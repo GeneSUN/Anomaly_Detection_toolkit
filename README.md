@@ -133,7 +133,7 @@ Two major ensemble strategies:
 References:  
 - Articles:  
   - https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0  
-  - https://medium.com/@injure21/ensemble-methods-for-outlier-detection-8b4572a66fe7  
+  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Ensemble%20Methods%20for%20Outlier%20Detection.md
 - Code: https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/EnsembleOutlierDetector.py  
 - Notebook: https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z  
 
