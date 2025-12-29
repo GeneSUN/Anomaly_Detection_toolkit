@@ -172,6 +172,7 @@ Each tree recursively splits data by:
 <img width="720" height="139" alt="image" src="https://github.com/user-attachments/assets/7366e1db-a335-44c4-9956-23f66b50ed1d" />
 
 
+
 Why it works for anomalies:
 - anomalies often lie in sparse regions
 - they are easier to isolate, so they require fewer splits
@@ -183,7 +184,7 @@ For each point, compute its average path length across all trees (how many split
 - **Outliers** → shorter average path length (isolated early)
 - **Normal points** → longer path length
 
-<img width="720" height="562" alt="image" src="https://github.com/user-attachments/assets/8978b4c6-d979-4ad6-9c05-911c15aeb533" />
+<img width="546" height="435" alt="image" src="https://github.com/user-attachments/assets/e86de209-b621-41ea-a8df-a8eb53b3c58e" />
 
 
 
