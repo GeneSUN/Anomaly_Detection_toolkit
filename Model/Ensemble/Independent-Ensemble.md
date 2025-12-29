@@ -152,7 +152,12 @@ This introduces diversity through different feature subspaces and can improve ro
 
 ## 3. Isolation Forests: an ensemble-centric view
 
-Isolation Forest can be viewed as an ensemble method (in spirit similar to Random Forests). It works in three main steps:
+Isolation Forest can be viewed as an ensemble method (in spirit similar to Random Forests), with two independent layers of randomness:
+
+- 1️⃣ Random sampling of data → which points a tree sees
+- 2️⃣ Random splitting inside the tree → how isolation happens
+
+It works in three main steps:
 
 ### 3.1 Random subsampling
 
