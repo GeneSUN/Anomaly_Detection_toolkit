@@ -132,8 +132,10 @@ Two major ensemble strategies:
 
 References:  
 - Articles:  
-  - https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0  
-  - https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Ensemble%20Methods%20for%20Outlier%20Detection.md
+  - [Ensemble Methods for Outlier Detection](https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Ensemble%20Methods%20for%20Outlier%20Detection.md)
+    - [independent/parallel ensemble](https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Independent-Ensemble.md)
+    - [Sequential Ensemble](https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Ensemble/Sequential%20Ensemble.md)
+  - https://medium.com/@injure21/ensemble-methods-for-outlier-detection-79f9d9af4af0
 - Code: https://github.com/GeneSUN/Anomaly_Detection_toolkit/blob/main/Model/Proximity-based%20/EnsembleOutlierDetector.py  
 - Notebook: https://colab.research.google.com/drive/1ot_fdYbEyg8WVg7n_fADoI69TOS9a5P8#scrollTo=OpaEvwmVvr5z  
 
