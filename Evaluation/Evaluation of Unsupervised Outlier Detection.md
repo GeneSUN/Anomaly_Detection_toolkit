@@ -111,10 +111,12 @@ You as doctor, need to detect the associated pattern, and i will help you design
 **From unsupervised to semi-supervised to supervised**
 
 
-## Empirical Method:
+## Empirical Method, 
 
-0. There are different level of Alert
-   0.1. alert has more than just binary label, but also numerical confident
+### Human-in-the-loop validation:
+
+0. There are different level of Alert <br>
+   0.1. alert has more than just binary label, but also numerical confident<br>
    0.2. One user/metrics can accumluate alerts
 
 1. Manually Validate:
@@ -129,8 +131,10 @@ You as doctor, need to detect the associated pattern, and i will help you design
    - Click Rate
 
    
+### Downstream Events
 
-
+- Ticket number drop
+- Labor Cost/efficiency
 
 
 
