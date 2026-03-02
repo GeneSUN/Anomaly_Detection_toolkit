@@ -124,7 +124,7 @@ You as doctor, need to detect the associated pattern, and i will help you design
    - select more confident alert cases.
 2. Field test
    - Customer tickets
-   - Technician manipulate the device
+   - Technician manipulate the device, Synthetic Anomaly Injection
 3. In Production:
    - Engineer reviewed: ~200 alerts; ~60% were confirmed as real degradations
    - Precision-at-top-K: in the top 20 alerts/day, ~15 were actionable
