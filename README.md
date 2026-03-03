@@ -26,8 +26,9 @@ This diagram provides a quick decision guide for selecting an anomaly detection 
   - [Preprocess](#preprocess)
   - [Feature Selection and Hyperparameter Tuning](#feature-selection-and-hyperparameter)
   - [Evaluation](#evaluation)
-- [7. Model Library](#7-model-library)
-- [8. Challenge / Trade-off](#8-challengetrade-off)
+- [7. Alerting Policy](#7-alerting-policy)
+- [8. Model Library](#7-model-library)
+- [9. Challenge / Trade-off](#8-challengetrade-off)
 ---
 
 ## 1) Univariate (single feature)
@@ -219,7 +220,7 @@ Real-time anomaly detection needs clean, consistent, and model-ready data, this 
 
 ---
 
-## 7) Alerting policy
+## 7) Alerting Policy
 Anomalies are converted into alerts or notifications for downstream stakeholders such as network engineers and technicians. Determining what qualifies as an alert happens at two levels.
 
 - First, the point level. <br> Each data point can be flagged as an anomaly when it exceeds a defined threshold. The threshold can be tuned so that only meaningful deviations are flagged, reducing noise.
@@ -230,7 +231,7 @@ Anomalies are converted into alerts or notifications for downstream stakeholders
   - Number of time series violates: A specific number of time series must violate the threshold or be forecasted to violate the threshold for the entire retest window before the condition is met.
 
 
-## 7) Model Library
+## 8) Model Library
 - [**ADTK**](https://adtk.readthedocs.io/en/stable/) — versatile toolkit for rule-based/statistical time-series anomaly detection  
 - [**Awesome Time Series Anomaly Detection**](https://github.com/rob-med/awesome-TS-anomaly-detection) — curated list of libraries and papers  
 - [**Anomalib**](https://github.com/open-edge-platform/anomalib) — deep-learning based SOTA models for anomaly detection and localization  
@@ -238,7 +239,7 @@ Anomalies are converted into alerts or notifications for downstream stakeholders
 
 ---
 
-## 8) Challenge/Trade-off
+## 9) Challenge/Trade-off
 
 1. **High feature variability complicates model generalization**
     - 50+ features differ in distribution, magnitude, and pattern  
