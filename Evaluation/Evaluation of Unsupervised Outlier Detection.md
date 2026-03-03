@@ -118,13 +118,12 @@ You as doctor, need to detect the associated pattern, and i will help you design
 0. There are different level of Alert
    - alert has more than just binary label, but also numerical confident
    - One user/metrics can accumluate alerts
-
 1. Manually Validate:
    - randomly sample alert cases.
    - select more confident alert cases.
 2. Field test
-   - Customer tickets
    - Technician manipulate the device, Synthetic Anomaly Injection
+   - Customer tickets
 3. In Production:
    - Engineer reviewed: ~200 alerts; ~60% were confirmed as real degradations
    - Precision-at-top-K: in the top 20 alerts/day, ~15 were actionable
