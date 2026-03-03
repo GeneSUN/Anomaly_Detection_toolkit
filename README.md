@@ -219,6 +219,17 @@ Real-time anomaly detection needs clean, consistent, and model-ready data, this 
 
 ---
 
+## 7) Alerting policy
+Anomalies are converted into alerts or notifications for downstream stakeholders such as network engineers and technicians. Determining what qualifies as an alert happens at two levels.
+
+- First, the point level. <br> Each data point can be flagged as an anomaly when it exceeds a defined threshold. The threshold can be tuned so that only meaningful deviations are flagged, reducing noise.
+
+- Second, the instance level. (each instance has many anomaly point) <br> A single instance (e.g., a tower or customer) may contain multiple anomaly points over time. An alert is triggered only when the number of accumulated anomaly points exceeds a predefined threshold, ensuring that notifications represent sustained issues rather than isolated spikes.
+  - Any time series violates: Default setting. Any time series that violates the threshold or is forecasted to violate the threshold for the entire retest window causes the condition to be met.
+  - Percent of time series violates: A percentage of time series must violate the threshold or be forecasted to violate the threshold for the entire retest window before the condition is met
+  - Number of time series violates: A specific number of time series must violate the threshold or be forecasted to violate the threshold for the entire retest window before the condition is met.
+
+
 ## 7) Model Library
 - [**ADTK**](https://adtk.readthedocs.io/en/stable/) — versatile toolkit for rule-based/statistical time-series anomaly detection  
 - [**Awesome Time Series Anomaly Detection**](https://github.com/rob-med/awesome-TS-anomaly-detection) — curated list of libraries and papers  
