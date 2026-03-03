@@ -114,7 +114,6 @@ You as doctor, need to detect the associated pattern, and i will help you design
 ## Empirical Method, 
 
 ### Human-in-the-loop validation:
-
 0. There are different level of Alert
    - alert has more than just binary label, but also numerical confident
    - One user/metrics can accumluate alerts
